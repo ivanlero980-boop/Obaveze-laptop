@@ -1107,6 +1107,12 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 .wkRow:hover .wkToMeet,.wkRow:focus-within .wkToMeet{opacity:1;pointer-events:auto}
 .wkRow .wkToMeet:hover{color:var(--green-deep)!important}
 .wkSrc{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:#cdd6d1;text-underline-offset:2px}.wkSrc:hover{color:var(--green-deep)}
+.delegBox{background:#f6f8f7;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 10px}
+.delegSeg{display:inline-flex;background:#eef1ef;border-radius:8px;padding:3px;gap:2px}
+.delegSeg label{margin:0;cursor:pointer}.delegSeg input{position:absolute;opacity:0;pointer-events:none}
+.delegSeg span{display:block;padding:4px 10px;border-radius:6px;font-size:13px;color:var(--mute)}
+.delegSeg input:checked+span{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.delegSeg input:focus-visible+span{outline:2px solid var(--green)}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -1119,7 +1125,7 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v104 · 27.11.2026.";
+const APP_VERSION="v105 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -3045,6 +3051,7 @@ function itemDialog(id){
  const x=S.items.find(z=>z.ID===id);if(!x){navBack();return}
  const canDeleteAction=!!(x.Tip==="Akcija"&&x.Status!=="Završeno");
  navOpen(`<div class="row between"><h2>${esc(x.Zadatak||x.Projekat)}</h2><button class="btn" id="close">×</button></div>
+ ${x.Tip==="Akcija"&&delegLabel(x)&&!isMe(x.Odgovoran)?`<div class="sm" style="margin-top:8px;color:var(--text)">Delegirano ${esc(delegLabel(x))}${x.DelegNapomena?` — ${esc(x.DelegNapomena)}`:""}</div>`:""}
  <div class="meta" style="margin:10px 0">${x.Status?`<span class="chip">${esc(x.Status)}</span>`:""}${x.Prioritet?`<span class="chip">${esc(x.Prioritet)}</span>`:""}${x.Sistem?`<span class="chip">${esc(x.Sistem)}</span>`:""}${x.Tip==="Akcija"?`<span class="chip ${x.KolegijumID?"person":""}">${x.KolegijumID?"Iz sastanka":"Samostalna akcija"}</span>`:""}</div>
  ${x.Tip==="Akcija"?actionContextHTML(x):""}
  ${x["Detalji dogovora"]?`<p class="sm" style="margin-top:10px">${esc(x["Detalji dogovora"])}</p>`:""}<hr>
@@ -3097,7 +3104,8 @@ ${x.Tip==="Beleška"?`<label class="f"><span class="sm mute">Tekst (opciono)</sp
  ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row" id="eSeriesWrap" style="gap:8px;align-items:flex-start"><label class="f grow"><span class="sm mute">Serija sastanaka</span><select id="eSeries"><option value="">Nije vezano</option>${seriesOptionsHTML(itemSeries,x.SerijaID)}</select></label><label class="f grow"><span class="sm mute">Projekat</span><select id="eProject"><option value="">Nije vezano</option>${projectOptionsHTML(x.ProjekatID)}</select></label></div>`:""}
  ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row"><label class="f grow"><span class="sm mute">Tip značaja</span><select id="eImportance"><option value="Operativno" ${(x.Znacaj||"Operativno")==="Operativno"?"selected":""}>Operativno</option><option value="Strateško" ${x.Znacaj==="Strateško"?"selected":""}>Strateško</option></select></label><label class="f grow"><span class="sm mute">Prioritet</span><select id="ePriority">${["Visok","Normalan","Nizak"].map(v=>`<option value="${v}" ${(x.Prioritet||"Normalan")===v?"selected":""}>${v}</option>`).join("")}</select></label></div>`:""}
 
- ${x.Tip==="Akcija"?`<div class="row"><label class="f grow"><span class="sm mute">Odgovoran *</span><input id="eOwner" value="${esc(x.Odgovoran||"Ivan")}" ${isNew?"":"readonly"}></label><label class="f grow"><span class="sm mute">Rok *</span><input type="date" id="eDue" value="${esc(x.Rok||"")}" ${isNew?"":"readonly"}></label></div>${!isNew?`<div class="sm mute" style="margin-top:-4px">Odgovorni i rok se mijenjaju iz detalja akcije, uz čuvanje istorije.</div>`:""}`:""}
+ ${x.Tip==="Akcija"?`<div class="row"><label class="f grow"><span class="sm mute">Odgovoran *</span><input id="eOwner" value="${esc(x.Odgovoran||"Ivan")}" ${isNew?"":"readonly"}></label><label class="f grow"><span class="sm mute">Rok *</span><input type="date" id="eDue" value="${esc(x.Rok||"")}" ${isNew?"":"readonly"}></label></div>${!isNew?`<div class="sm mute" style="margin-top:-4px">Odgovorni i rok se mijenjaju iz detalja akcije, uz čuvanje istorije.</div>`:""}
+ ${!x.KolegijumID?`<div id="eDelegWrap" class="delegBox" ${isMe(x.Odgovoran||"Ivan")?"hidden":""}><div class="sm mute" style="margin-bottom:6px">Kako i kada je delegirano (opciono)</div><div class="row" style="gap:12px;align-items:center;flex-wrap:wrap">${delegHowHTML("eDelegHow",x.DelegNacin||(isNew?"Mail":""))}<label class="f" style="margin:0"><input type="date" id="eDelegDate" value="${esc(x.DelegDatum||(isNew?today():""))}" aria-label="Datum delegiranja"></label><input id="eDelegNote" placeholder="npr. naslov maila" value="${esc(x.DelegNapomena||"")}" style="flex:1 1 220px"></div></div>`:""}`:""}
  ${x.Tip==="Projekat"?`<label class="f"><span class="sm mute">Rok projekta *</span><input type="date" id="eProjectDue" value="${esc(x.Rok||"")}" ${isNew?"":"readonly"}></label>${!isNew?`<div class="sm mute" style="margin-top:-4px">Rok se pomjera iz detalja projekta, uz obavezan razlog i istoriju.</div>`:""}
  <label class="f"><span class="sm mute">Sistem</span><select id="eProjectSystem">${["Osiguranje","Tehnički","Zajedničko"].map(v=>`<option value="${v}" ${(x.Sistem||"Osiguranje")===v?"selected":""}>${v}</option>`).join("")}</select></label>
  <label class="f"><span class="sm mute">Opis / kontekst</span><textarea id="eProjectDetails">${esc(x["Detalji dogovora"]||"")}</textarea></label>`:""}
@@ -3163,6 +3171,7 @@ ${x.Tip==="Beleška"?`<label class="f"><span class="sm mute">Tekst (opciono)</sp
   x.Oblast=(x.Tip==="Projekat"||x.KolegijumID)?"Poslovno":($("#eArea")?.value||"Poslovno");
   if(x.Tip==="Akcija"){
    x.Odgovoran=$("#eOwner").value.trim();x.Rok=$("#eDue").value;x.Status=x.Status==="Završeno"?"Završeno":"Otvoreno";
+   if($("#eDelegWrap")&&!isMe(x.Odgovoran)){x.DelegNacin=document.querySelector('input[name="eDelegHow"]:checked')?.value||"";x.DelegDatum=$("#eDelegDate")?.value||"";x.DelegNapomena=($("#eDelegNote")?.value||"").trim()}
    x.Projekat=x.Projekat||"";x.ProjectID=x.ProjectID||null;x.Znacaj=$("#eImportance")?.value||x.Znacaj||"Operativno";x.Prioritet=$("#ePriority")?.value||x.Prioritet||"Normalan";x.Sistem=x.Oblast==="Poslovno"?($("#eSystem")?.value||"Osiguranje"):"";
    const selectedSeriesId=Number($("#eSeries")?.value)||null;
    x.ProjekatID=Number($("#eProject")?.value)||null;
@@ -4014,6 +4023,9 @@ function wkLabel(start){
 const WK_DAYS=["ned","pon","uto","sri","čet","pet","sub"];
 function wkShort(isoDate){const d=new Date(isoDate+"T00:00:00");return `${WK_DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`}
 function wkDefaultDue(start){const fri=wkAdd(start,4);return fri<today()?today():fri}
+const DELEG_HOW=[["Mail","mailom"],["Telefon","telefonom"],["Lično","lično"]];
+function delegLabel(x){if(!x||!x.DelegNacin||x.KolegijumID)return "";const w=(DELEG_HOW.find(z=>z[0]===x.DelegNacin)||[0,x.DelegNacin])[1];return `${w}${x.DelegDatum?` ${wkShort(x.DelegDatum).replace(/^\S+ /,"")}`:""}`}
+function delegHowHTML(name,sel){return `<span class="delegSeg" role="radiogroup" aria-label="Kako je delegirano">${DELEG_HOW.map(([v])=>`<label><input type="radio" name="${name}" value="${v}" ${sel===v?"checked":""}><span>${v}</span></label>`).join("")}</span>`}
 function isMe(name){return /^ivan(\s|$)/i.test(String(name||"").trim())}
 function wkIsMine(x){return isMe(x.Odgovoran)}
 function wkMeetTargetsHTML(ser,sel){
@@ -4199,7 +4211,7 @@ function vNedjelja(){
  const st=weekView.start,d=wkData(st),cur=st===wkMonday(today());
  const closed=(S.weekLog||{})[st];
  const due=x=>{if(!x.Rok)return "";const k=daysTo(x.Rok);return k<0?`<span class="wkDue late">Kasni ${Math.abs(k)} d</span>`:k===0?`<span class="wkDue soon">Danas</span>`:`<span class="wkDue">${esc(wkShort(x.Rok))}</span>`};
- const src=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null;return m?`<button class="wkSrc" data-wk-src="${m.ID}" title="Otvori sastanak">sa sastanka: ${meetingLabel(m)}</button>`:""};
+ const src=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null;if(m)return `<button class="wkSrc" data-wk-src="${m.ID}" title="Otvori sastanak">sa sastanka: ${meetingLabel(m)}</button>`;const dl=!wkIsMine(x)?delegLabel(x):"";return dl?`<span class="wkHow" title="${esc(x.DelegNapomena||"")}">${esc(dl)}${x.DelegNapomena?` · ${esc(x.DelegNapomena)}`:""}</span>`:""};
  const meta=x=>{const p=x.ProjekatID?projectById(x.ProjekatID):null;return [p?projectLabel(p):"",wkPinned(x,st,d.end)?(x.UNedjelji<st?`ostalo iz nedjelje ${wkLabel(x.UNedjelji)} · rok ${fmtDate(x.Rok)}`:`uzeto u ovu nedjelju · rok ${fmtDate(x.Rok)}`):"",x.PrenosBroj?`preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · ")};
  const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)||src(x)?`<small>${src(x)}${src(x)&&meta(x)?" · ":""}${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button>${wkPinned(x,st,d.end)?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
  const doneRowD=x=>`<div class="wkRow done" data-wk-item="${x.ID}"><span class="wkCheck on" aria-hidden="true">✓</span><span class="wkText"><b>${esc(x.Zadatak)}</b><small>${esc(x.Odgovoran||"")} · ${x.Otkazano?"otkazano":"završeno"} ${esc(wkShort(x.ZavrsenDatum))}</small></span></div>`;
@@ -4218,7 +4230,7 @@ function vNedjelja(){
   <section class="wkQuick">
    <div class="wkQuickRow"><input id="wkInput" placeholder="Nova obaveza… (Enter)"><div class="wkSeg" role="group" aria-label="Kuda ide">${kinds.map(([k,l])=>`<button class="${weekView.kind===k?"on":""}" data-wk-kind="${k}">${l}</button>`).join("")}</div></div>
    <div class="wkQuickRow wkQuickExtra">
-    ${weekView.kind==="deleg"?`<label>Ko <input id="wkWho" list="wkPeople" placeholder="ime"></label><datalist id="wkPeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>`:""}
+    ${weekView.kind==="deleg"?`<label>Ko <input id="wkWho" list="wkPeople" placeholder="ime"></label><datalist id="wkPeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>${delegHowHTML("wkHow",weekView.delegHow||"Mail")}<label>Delegirano <input type="date" id="wkDelegDate" value="${esc(today())}"></label>`:""}
     ${weekView.kind==="mine"||weekView.kind==="deleg"?`<label>Rok <input type="date" id="wkDue" value="${esc(wkDefaultDue(st))}"></label>`:""}
     ${weekView.kind==="meet"?`<label>Sastanak <select id="wkSeries">${wkMeetTargetsHTML(ser,weekView.series)}</select></label><span class="sm mute">${String(weekView.series).startsWith("m:")?"tema ide u agendu tog sastanka":weekView.series==="new"?"Enter otvara novi ad hoc sastanak sa ovom temom":"tema ide u agendu sljedećeg termina serije"}</span>`:""}
     ${weekView.kind==="note"?`<span class="sm mute">ide u Neobrađeno — razradiš kasnije</span>`:""}
@@ -4257,7 +4269,9 @@ function vNedjelja(){
    const who=weekView.kind==="mine"?"Ivan":($("#wkWho")?.value||"").trim(),dueV=$("#wkDue")?.value||"";
    if(!who){alert("Unesi ko je odgovoran.");$("#wkWho")?.focus();return}
    if(!dueV){alert("Akcija mora imati rok.");$("#wkDue")?.focus();return}
-   S.items.push({ID:++S.lastId,Tip:"Akcija",Zadatak:t,Odgovoran:who,Rok:dueV,...base});
+   const dx=weekView.kind==="deleg"?{DelegNacin:document.querySelector('input[name="wkHow"]:checked')?.value||"",DelegDatum:$("#wkDelegDate")?.value||today(),DelegNapomena:""}:{};
+   if(weekView.kind==="deleg")weekView.delegHow=dx.DelegNacin||"Mail";
+   S.items.push({ID:++S.lastId,Tip:"Akcija",Zadatak:t,Odgovoran:who,Rok:dueV,...base,...dx});
   }else if(weekView.kind==="meet"){
    const tv=$("#wkSeries")?.value||"";weekView.series=tv;
    if(tv==="new"){$("#wkInput").value="";newAdhocForTopic(t);return}
@@ -4435,12 +4449,13 @@ function sendMinutesDialog(meetingId,extras){
   window.__lastMailto=url;setTimeout(()=>{window.location.href=url},400);
  };
 }
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="eOwner"){const w=document.getElementById("eDelegWrap");if(w)w.hidden=isMe(e.target.value)}});
 function bindCards(root=document){
  root.querySelectorAll("[data-item]").forEach(c=>c.onclick=()=>itemDialog(Number(c.dataset.item)));
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-104").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-105").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
