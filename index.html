@@ -654,11 +654,11 @@ body.liveMode #view{max-width:none!important}
 .liveTitle{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:2px}
 .liveTitle b{font-size:17px;letter-spacing:-.01em}.liveTitle span{font-size:12.5px;color:var(--mute)}
 .liveHead .btn{font-size:14px;padding:9px 14px}
-.liveBody{flex:1;display:grid;grid-template-columns:270px minmax(0,1fr) 360px;align-items:stretch}
+.liveBody{flex:1;display:grid;grid-template-columns:270px minmax(0,1fr);align-items:stretch}
 .liveAgenda,.liveMinutes{position:sticky;top:60px;align-self:start;height:calc(100vh - 60px);overflow:auto;box-sizing:border-box}
 .liveAgenda{padding:16px 14px;border-right:1px solid var(--line);background:#fbfcfb}
 .liveMinutes{padding:16px 18px;border-left:1px solid var(--line);background:#eef2ef}
-.liveMain{padding:20px 28px 60px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.liveMain{padding:20px 40px 60px;display:flex;flex-direction:column;gap:14px;min-width:0;width:100%;max-width:1040px;box-sizing:border-box;justify-self:center}
 .laHead,.lmpHead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 .laHead span:last-child{letter-spacing:0;text-transform:none;font-weight:600;font-size:12px}
 .laProg{height:4px;background:#e6ebe8;border-radius:4px;margin-bottom:12px}.laProg i{display:block;height:4px;background:var(--green);border-radius:4px}
@@ -1006,7 +1006,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v93 · 27.11.2026.";
+const APP_VERSION="v94 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -3689,10 +3689,12 @@ function liveDueValue(m,d){
 }
 function startLive(id){closeDlg();liveView.meetingId=id;liveView.topicId=null;route="uzivo";render();window.scrollTo(0,0)}
 function exitLive(){const mm=meetingById(liveView.meetingId);if(mm&&!liveConfirmDrafts(mm,"Izaći iz prikaza uživo"))return;liveFlush();const id=liveView.meetingId;liveView.meetingId=null;route="sastanci";render();if(id&&meetingById(id))meetingDialog(id)}
+function zakljWord(n){const m10=n%10,m100=n%100;return `${n} ${m10===1&&m100!==11?"zaključak":m10>=2&&m10<=4&&(m100<12||m100>14)?"zaključka":"zaključaka"}`}
 function liveTopicStatus(t,isCur){
  if(t.PrenesenoNaSastanakID)return "Preneseno";
- if(isCur)return "Sada se obrađuje";
- if(agendaProcessed(t)){const c=(t.Zakljucci||[]).length,a=agendaRelatedItems(t.ID).filter(y=>y.Tip==="Akcija").length;return ["Obrađeno",c?`${c} zaklj.`:"",a?`${a} akc.`:""].filter(Boolean).join(" · ")}
+ const pc=topicPoints(t,0).length;
+ if(isCur)return pc?`Sada se obrađuje · ${zakljWord(pc)}`:"Sada se obrađuje";
+ if(agendaProcessed(t))return pc?`Obrađeno · ${zakljWord(pc)}`:"Obrađeno";
  return t.PrenesiDalje?"Bez ishoda · prenosi se":"Bez ishoda";
 }
 function vUzivo(){
@@ -3707,7 +3709,7 @@ function vUzivo(){
    <button class="btn" id="liveMinutesBtn">Zapisnik</button>
    ${m.Status!=="Završen"?`<button class="btn pri" id="liveFinish">Završi sastanak</button>`:`<span class="chip">Sastanak je završen</span>`}
   </header>
-  <div class="liveBody"><aside class="liveAgenda" id="liveAgenda"></aside><section class="liveMain" id="liveMain"></section><aside class="liveMinutes" id="liveMinutesPane"></aside></div>
+  <div class="liveBody"><aside class="liveAgenda" id="liveAgenda"></aside><section class="liveMain" id="liveMain"></section></div>
  </div>`;
  $("#liveBack").onclick=exitLive;
  $("#liveMinutesBtn").onclick=()=>{liveFlush();meetingMinutesDialog(m.ID)};
@@ -4157,7 +4159,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-93").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-94").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
