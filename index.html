@@ -950,7 +950,7 @@ body.liveMode #view{max-width:none!important}
 .wkLiveToggle{margin:-6px 0 14px}
 .wcDate{display:inline-flex;gap:8px;align-items:center;white-space:nowrap;margin-top:6px;font-size:13px;color:#4d5853}.wcDate input{padding:4px 8px}
 .wkSummary{flex-wrap:wrap}
-</style></head><body><main class="app"><div id="view"></div></main>
+.smRow{display:grid;grid-template-columns:auto 160px 1fr;gap:10px;align-items:center}.smRow input[type=email]{width:100%}.smCheck{display:flex!important;gap:8px;align-items:center;margin-top:12px}.smCheck input{width:auto!important;margin:0}</style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
 <button data-nav="pregled"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span>Pregled</span></button>
@@ -961,7 +961,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v86 · 27.11.2026.";
+const APP_VERSION="v87 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -2310,7 +2310,7 @@ async function exportMinutesPDF(d,extras={}){
  const generatedAt=minutesGeneratedAt(),fileName=minutesFileName(d)+".pdf";
  try{
   const blob=await buildMinutesPdfBlob(d,extras,generatedAt),file=new File([blob],fileName,{type:"application/pdf"});
-  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+  if(!isDesktop()&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
    try{await navigator.share({files:[file],title:fileName});return}catch(e){if(e?.name==="AbortError")return}
   }
   const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fileName;a.style.display="none";document.body.appendChild(a);a.click();
@@ -2382,13 +2382,15 @@ function meetingMinutesDialog(meetingId,tempExtras=null){
    <div class="minutesSection"><h3>Završna napomena</h3><textarea id="minClosing" class="minutesFreeText" placeholder="Opciono">${esc(extras.closing||"")}</textarea></div>
   </div>
   <div class="minutesActions">
-   <button class="btn pri" id="minPdf">PDF zapisnik</button>
+   <button class="btn pri" id="minSend">Pošalji zapisnik</button>
+   <button class="btn" id="minPdf">Preuzmi PDF</button>
    <button class="btn" id="minSave">Sačuvaj ručna polja</button>
   </div>
   <button class="btn" style="width:100%;margin-top:8px" id="minBack">Nazad na sastanak</button>`,`minutes:${meetingId}`,{refresh:()=>meetingMinutesDialog(meetingId,readMinutesExtras())});
 
  $("#minClose").onclick=navBack;$("#minBack").onclick=navBack;
  $("#minPdf").onclick=()=>exportMinutesPDF(meetingMinutesData(m),readMinutesExtras());
+ $("#minSend").onclick=()=>{const ex=readMinutesExtras();m.ZapisnikDraft=ex;save();sendMinutesDialog(m.ID,ex)};
  $("#minSave").onclick=()=>{m.ZapisnikDraft=readMinutesExtras();save();alert("Sačuvana su ručna polja zapisnika. Činjenice i akcije se uvijek čitaju iz izvornog sastanka.")};
  $("#dlgBody").querySelectorAll("[data-min-agenda]").forEach(b=>b.onclick=()=>noteDialog(Number(b.dataset.minAgenda)));
  $("#dlgBody").querySelectorAll("[data-min-action]").forEach(b=>b.onclick=()=>itemDialog(Number(b.dataset.minAction)));
@@ -2581,7 +2583,7 @@ function meetingDialog(id){
    ${m.Napomena?`<button class="seriesLink" id="openMeetingNote">Napomena ›</button>`:""}
   </div>
   <div class="sm" style="margin-top:8px"><span class="mute">Učesnici:</span> ${esc(participantText(m.Ucesnici)||"—")} <span class="mute">· Sistem:</span> ${esc(meetingSystem(m))}</div>
-  <div class="meetingTopActions"><div class="btnrow" style="margin-top:10px"><button class="btn grow" id="shareAgenda">Podijeli agendu</button><button class="btn grow" id="shareConclusions">Podijeli zaključke</button></div>
+  <div class="meetingTopActions"><div class="btnrow" style="margin-top:10px"><button class="btn grow" id="shareAgenda">Podijeli agendu</button><button class="btn grow" id="shareConclusions">Podijeli zaključke</button><button class="btn grow" id="sendMinutes">Pošalji zapisnik</button></div>
   <button class="btn ${isDesktop()&&!finished?"":"pri"}" style="width:100%;margin-top:8px" id="meetingMinutes">Pregled zapisnika</button>${isDesktop()&&!finished?`<button class="btn pri" style="width:100%;margin-top:8px" id="meetingLive">▶ Vodi uživo</button>`:""}</div>
   <div class="kpis meetingKpis" style="margin-top:14px">
    <div class="kpi"><div class="xs">Akcije</div><div class="num">${allA.length}</div></div>
@@ -2610,6 +2612,7 @@ function meetingDialog(id){
  if($("#openSeries"))$("#openSeries").onclick=()=>seriesDialog(m.SerijaID);
  if($("#openMeetingNote"))$("#openMeetingNote").onclick=()=>meetingNoteDialog(m.ID);
  $("#shareAgenda").onclick=()=>shareText(`${ser?.Naziv||m.Naslov||"Sastanak"} — agenda`,meetingAgendaText(m));
+ if($("#sendMinutes"))$("#sendMinutes").onclick=()=>sendMinutesDialog(m.ID);
  $("#shareConclusions").onclick=()=>shareText(`${ser?.Naziv||m.Naslov||"Sastanak"} — zaključci`,meetingConclusionsText(m));
  $("#meetingMinutes").onclick=()=>meetingMinutesDialog(m.ID);
  if($("#meetingLive"))$("#meetingLive").onclick=()=>startLive(m.ID);
@@ -4033,12 +4036,44 @@ async function exportWeekReportPDF(st){
  }catch(e){console.error(e);alert("Izvještaj nedjelje nije mogao da se generiše.")}
 }
 
+function sendMinutesDialog(meetingId,extras){
+ const m=meetingById(meetingId);if(!m)return;
+ if(!S.contacts||typeof S.contacts!=="object")S.contacts={};
+ const ex=extras||m.ZapisnikDraft||{};
+ const names=parseParticipants(ex.present!==undefined&&ex.present!==""?ex.present:minutesParticipants(m)).filter(n=>n.toLocaleLowerCase()!=="ivan");
+ const d0=meetingMinutesData(m),label=meetingLabel(m).replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+ const fileName=minutesFileName(d0)+".pdf",dot=label.endsWith(".")?"":".";
+ navOpen(`<div class="row between"><div><h2>Pošalji zapisnik</h2><div class="sm mute">${meetingLabel(m)}</div></div><button class="btn" id="smClose">×</button></div>
+  <div class="sm mute" style="margin-top:8px">Unesi e-mail adrese učesnika — aplikacija ih pamti za sljedeće sastanke.</div>
+  <div class="list" style="margin-top:10px">${names.map((n,i)=>`<label class="card tight smRow"><input type="checkbox" data-sm-on="${i}" checked><b>${esc(n)}</b><input type="email" data-sm-mail="${i}" value="${esc(S.contacts[n]||"")}" placeholder="e-mail adresa"></label>`).join("")||`<div class="empty">Na zapisniku nema drugih prisutnih osim tebe.</div>`}</div>
+  <label style="display:block;margin-top:10px">Dodatni primaoci (zarezom)<input id="smExtra" placeholder="adrese odvojene zarezom"></label>
+  <label class="smCheck"><input type="checkbox" id="smBody" checked><span>U tijelo maila stavi i zaključke i zadatke</span></label>
+  <div class="card tight" style="margin-top:12px;background:#f6f9f7"><b>Kako ide</b><div class="sm" style="margin-top:4px">1. Klikni „Pripremi mail”: PDF <b>${esc(fileName)}</b> se snima u Preuzimanja, a Outlook otvara novi mail sa primaocima i naslovom.<br>2. Prevuci PDF iz trake za preuzimanja (ili iz foldera Preuzimanja) u mail i pošalji. Pregledač ne može sam da priloži fajl u Outlook.</div></div>
+  <div class="btnrow" style="margin-top:14px;justify-content:flex-end"><button class="btn pri" id="smGo">Pripremi mail</button></div>`,`sendMinutes:${meetingId}`,{dedupe:true});
+ $("#smClose").onclick=navBack;
+ $("#smGo").onclick=async()=>{
+  const to=[];let bad=[];
+  names.forEach((n,i)=>{const e=($(`[data-sm-mail="${i}"]`).value||"").trim();if(e)S.contacts[n]=e;else delete S.contacts[n];if($(`[data-sm-on="${i}"]`).checked){if(e)to.push(e);else bad.push(n)}});
+  ($("#smExtra").value||"").split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean).forEach(e=>to.push(e));
+  save();
+  if(!to.length){alert("Nema nijedne e-mail adrese. Unesi bar jednog primaoca.");return}
+  if(bad.length&&!confirm(`Bez adrese: ${bad.join(", ")}. Nastaviti bez njih?`))return;
+  await exportMinutesPDF(meetingMinutesData(m),ex);
+  const subject=`Zapisnik — ${label}`;
+  let body=`Poštovani,\n\nu prilogu je zapisnik sa sastanka ${label}${dot}\n`;
+  if($("#smBody").checked){const t=meetingConclusionsText(m).replace(/\n[A-ZČĆŠŽĐ ]+\n—(?=\n|$)/g,"").trim();if(t)body+=`\n${t}\n`}
+  body+=`\nSrdačan pozdrav,\nIvan`;
+  let url=`mailto:${to.map(encodeURIComponent).join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  if(url.length>1900){url=`mailto:${to.map(encodeURIComponent).join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Poštovani,\n\nu prilogu je zapisnik sa sastanka ${label}${dot}\n\nSrdačan pozdrav,\nIvan`)}`;setTimeout(()=>alert("Zaključci su predugački za automatski unos u mail — u mailu je samo kratak tekst, a sve je u PDF prilogu."),600)}
+  window.__lastMailto=url;setTimeout(()=>{window.location.href=url},400);
+ };
+}
 function bindCards(root=document){
  root.querySelectorAll("[data-item]").forEach(c=>c.onclick=()=>itemDialog(Number(c.dataset.item)));
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-86").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-87").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
