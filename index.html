@@ -1087,7 +1087,7 @@ label:has(#eImportance),label:has(#topicImportance),label:has(#crImportance){dis
 .kpiRow{display:flex;align-items:center;gap:14px;padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer}
 .kpiRow:hover{border-color:#bcd3c5}
 .kpiRowMain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.kpiRowMain b{font-size:14.5px;font-weight:600}.kpiRowMain span{font-size:12.5px;color:var(--mute)}
-.kpiVerdict{font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--mute)}.kpiVerdict.ok{color:var(--green-deep)}.kpiVerdict.bad{color:#b42318}
+.kpiVerdict{font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--mute)}.kpiVerdict.ok{color:var(--green-deep)}.kpiVerdict.mid{color:#8a5a00}.kpiVerdict.bad{color:#b42318}
 .kpiTile{position:relative;overflow:hidden;padding:12px 15px 13px 18px!important}
 .kpiTile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#cfd6d2}
 .kpiTile.k-ok:before{background:#1f8a4c}.kpiTile.k-mid:before{background:#d08a00}.kpiTile.k-bad:before{background:#c4352b}
@@ -1115,7 +1115,7 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v101 · 27.11.2026.";
+const APP_VERSION="v102 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1527,8 +1527,8 @@ function vAkcije(){
  const all=()=>activeActions().slice().sort(attentionSort);
  const scopedAll=()=>{
   const arr=all();
-  if(actionView.scope==="mine")return arr.filter(x=>(x.Odgovoran||"")==="Ivan");
-  if(actionView.scope==="followup")return arr.filter(x=>(x.Odgovoran||"")!=="Ivan");
+  if(actionView.scope==="mine")return arr.filter(x=>isMe(x.Odgovoran));
+  if(actionView.scope==="followup")return arr.filter(x=>!isMe(x.Odgovoran));
   return arr;
  };
  const isFiltered=()=>actionView.scope!=="mine"||actionView.area!=="all"||actionView.importance!=="all"||actionView.priority!=="all"||!!actionView.search;
@@ -4009,7 +4009,8 @@ function wkLabel(start){
 const WK_DAYS=["ned","pon","uto","sri","čet","pet","sub"];
 function wkShort(isoDate){const d=new Date(isoDate+"T00:00:00");return `${WK_DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`}
 function wkDefaultDue(start){const fri=wkAdd(start,4);return fri<today()?today():fri}
-function wkIsMine(x){return (x.Odgovoran||"")==="Ivan"}
+function isMe(name){return /^ivan(\s|$)/i.test(String(name||"").trim())}
+function wkIsMine(x){return isMe(x.Odgovoran)}
 function wkMeetTargetsHTML(ser,sel){
  const ms=(S.meetings||[]).filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""));
  const ml=m=>`${m.SerijaID?"":"Ad hoc · "}${meetingLabel(m)}`;
@@ -4081,9 +4082,9 @@ function wkActivity(st){
  const topics=S.items.filter(x=>x.Tip==="Beleška"&&x.AgendaStavka&&ids.has(Number(x.KolegijumID)));
  const concl=topics.reduce((n,t)=>n+topicPoints(t,0).length,0);
  const acts=S.items.filter(x=>x.Tip==="Akcija"&&ids.has(Number(x.KolegijumID)));
- const delegated=acts.filter(x=>!wkIsMine(x)).length;
+ const delegated=acts.filter(x=>!wkIsMine(x)).length,openActs=acts.filter(x=>x.Status!=="Završeno");
  const done=S.items.filter(x=>x.Tip==="Akcija"&&bizItem(x)&&x.Status==="Završeno"&&!x.Otkazano&&x.ZavrsenDatum>=st&&x.ZavrsenDatum<=end).length;
- return {ms,held,openPast,concl,acts:acts.length,delegated,done};
+ return {ms,held,openPast,concl,acts:acts.length,delegated,done,openActs};
 }
 function wkKpiHTML(st,d){
  const k=wkKpiData(st,d),a=wkActivity(st);
@@ -4096,7 +4097,7 @@ function wkKpiHTML(st,d){
  const actBar=`<div class="actBar"><span class="actLbl">Rad ove nedjelje</span>
   <button class="actItem" data-act="mtg"><b>${a.held.length}</b> od ${mt} ${plSr(mt,["sastanka","sastanka","sastanaka"])} završen${a.held.length===1?"":"o"}${a.openPast.length?` <em>· ${a.openPast.length} održan${a.openPast.length===1?"":"o"}, nije zatvoren${a.openPast.length===1?"":"o"}</em>`:""}</button>
   <span class="actItem"><b>${a.concl}</b> ${plSr(a.concl,["zaključak","zaključka","zaključaka"])}</span>
-  <span class="actItem"><b>${a.delegated}</b> ${plSr(a.delegated,["zadatak delegiran","zadatka delegirana","zadataka delegirano"])} na sastancima</span>
+  <button class="actItem" data-act="tasks"><b>${a.acts}</b> ${plSr(a.acts,["zadatak","zadatka","zadataka"])} sa sastanaka${a.openActs.length?` <em>· ${a.openActs.length} otvoren${a.openActs.length===1?"":"o"}</em>`:""}</button>
   <span class="actItem"><b>${a.done}</b> ${plSr(a.done,["obaveza završena","obaveze završene","obaveza završeno"])}</span></div>`;
  return `<section class="kpiStrip" aria-label="Pokazatelji">
   ${tile("real",k.real===null?"—":k.real+"%","Realizacija nedjelje",`${k.done} od ${k.plan} ${spark}`,band(k.real,80,50))}
@@ -4105,6 +4106,16 @@ function wkKpiHTML(st,d){
   ${tile("deleg",dp===null?"—":dp+"%","Delegirano do roka",k.dBase?`${k.dOk} od ${k.dBase} · 8 nedjelja`:"još nema podataka",band(dp,80,60))}
   ${tile("mtg",mp===null?"—":mp+"%","Zadaci sa sastanaka",k.mBase?`${k.mOk} od ${k.mBase} do roka · 8 ned.`:"još nema podataka",band(mp,80,60))}
  </section>${actBar}`;
+}
+function actTasksDialog(st){
+ const ms=wkActivity(st).ms,ids=new Set(ms.map(m=>Number(m.ID)));
+ const acts=S.items.filter(x=>x.Tip==="Akcija"&&ids.has(Number(x.KolegijumID))).sort((a,b)=>(a.Status==="Završeno")-(b.Status==="Završeno")||(a.Rok||"").localeCompare(b.Rok||""));
+ const v=x=>x.Status==="Završeno"?["završeno","ok"]:x.Rok&&x.Rok<today()?[`kasni ${-daysTo(x.Rok)} d`,"bad"]:x.Rok===today()?["rok danas","mid"]:[x.Rok?`rok ${wkShort(x.Rok)}`:"",""];
+ navOpen(`<div class="row between"><h2>Zadaci sa sastanaka ove nedjelje</h2><button class="btn" id="atkClose">×</button></div>
+  <div class="kpiHow" style="margin-top:8px">Svi zadaci (zaključci sa odgovornim i rokom) nastali na sastancima ove nedjelje. Klik otvara zadatak, gdje ga možeš označiti kao završen.</div>
+  ${acts.map(x=>{const [t,c]=v(x),m=meetingById(x.KolegijumID);return `<div class="kpiRow" data-atk="${x.ID}"><div class="kpiRowMain"><b>${esc(x.Zadatak)}</b><span>${esc([x.Odgovoran||"",m?meetingLabel(m).replace(/<[^>]+>/g,""):""].filter(Boolean).join(" · "))}</span></div><span class="kpiVerdict ${c}">${esc(t)}</span></div>`}).join("")||`<div class="empty">Nema zadataka sa sastanaka ove nedjelje.</div>`}`,`actTasks:${st}`,{dedupe:true});
+ $("#atkClose").onclick=navBack;
+ $("#dlgBody").querySelectorAll("[data-atk]").forEach(el=>el.onclick=()=>itemDialog(Number(el.dataset.atk)));
 }
 function actMeetingsDialog(st){
  const a=wkActivity(st);
@@ -4119,7 +4130,7 @@ function kpiDialog(key,st){
  const d=wkData(st),k=wkKpiData(st,d),T=today();
  const verdict=x=>{const o=origDue(x);if(x.Status==="Završeno"){if(!o)return ["završeno",""];const late=-daysTo(o)+daysTo(x.ZavrsenDatum);return late<=0?["na vrijeme","ok"]:[`kasnilo ${late} d`,"bad"]}if(x.Rok&&x.Rok<T)return [`kasni ${-daysTo(x.Rok)} d`,"bad"];return [x.Rok?`rok ${wkShort(x.Rok)}`:"",""]};
  const row=(x,info)=>{const [v,c]=verdict(x);return `<div class="kpiRow" data-kpi-item="${x.ID}"><div class="kpiRowMain"><b>${esc(x.Zadatak)}</b><span>${esc(info)}</span></div><span class="kpiVerdict ${c}">${esc(v)}</span></div>`};
- const infoOf=x=>{const o=origDue(x),parts=[x.Odgovoran&&x.Odgovoran!=="Ivan"?x.Odgovoran:""];if(o)parts.push(`rok ${fmtDate(o)}`);if(o&&x.Rok&&o!==x.Rok)parts.push(`pomjeren na ${fmtDate(x.Rok)}`);if(x.Status==="Završeno"&&x.ZavrsenDatum)parts.push(`završeno ${fmtDate(x.ZavrsenDatum)}`);return parts.filter(Boolean).join(" · ")};
+ const infoOf=x=>{const o=origDue(x),parts=[x.Odgovoran&&!isMe(x.Odgovoran)?x.Odgovoran:""];if(o)parts.push(`rok ${fmtDate(o)}`);if(o&&x.Rok&&o!==x.Rok)parts.push(`pomjeren na ${fmtDate(x.Rok)}`);if(x.Status==="Završeno"&&x.ZavrsenDatum)parts.push(`završeno ${fmtDate(x.ZavrsenDatum)}`);return parts.filter(Boolean).join(" · ")};
  const sec=(t,arr)=>arr.length?`<div class="kpiSec">${t} <span>${arr.length}</span></div>${arr.map(x=>row(x,infoOf(x))).join("")}`:"";
  const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
  let title="",big="",sentence="",how="",body="";
@@ -4187,7 +4198,7 @@ function vNedjelja(){
  const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button>${wkPinned(x,st,d.end)?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
  const doneRow=x=>`<div class="wkRow done" data-wk-item="${x.ID}"><span class="wkCheck on" aria-hidden="true">✓</span><span class="wkText"><b>${esc(x.Zadatak)}</b><small>${x.Otkazano?"otkazano":"završeno"} ${esc(wkShort(x.ZavrsenDatum))}</small></span></div>`;
  const delegRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button><span class="wkWho">${esc(x.Odgovoran||"")}</span>${due(x)}</div>`;
- const people=[...new Set(S.people||[])].filter(p=>p!=="Ivan");
+ const people=[...new Set(S.people||[])].filter(p=>!isMe(p));
  const ser=recurringSeries().filter(s=>s.Status!=="Završen");
  const kinds=[["mine","Moje"],["deleg","Delegiraj"],["meet","Na sastanak"],["note","Beleška"]];
  $("#view").innerHTML=`<div class="top"><div><div class="sm mute" style="margin:0 0 4px">${esc(wkLabel(st))}${closed?` · nedjelja zatvorena ${esc(fmtDate(closed.closedAt||""))}`:""}</div><h1>Moja nedjelja</h1></div>
@@ -4265,6 +4276,7 @@ function vNedjelja(){
  $("#wkPick").onclick=()=>weekPickDialog(st);
  $("#view").querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>kpiDialog(b.dataset.kpi,st));
  $("#view").querySelectorAll('[data-act="mtg"]').forEach(b=>b.onclick=()=>actMeetingsDialog(st));
+ $("#view").querySelectorAll('[data-act="tasks"]').forEach(b=>b.onclick=()=>actTasksDialog(st));
 }
 function weekPickDialog(st){
  const end=wkAdd(st,6);
@@ -4420,7 +4432,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-101").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-102").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
