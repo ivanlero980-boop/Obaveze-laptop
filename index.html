@@ -994,7 +994,7 @@ body.liveMode #view{max-width:none!important}
   .navSub .mtgSerDone{margin:8px 0 0;padding:0}.navSub .mtgSerDone summary{padding:6px 8px 6px 46px;font-size:12.5px}
   .mtgMain{max-width:980px}
 }
-.navCount{display:none}
+.navCount{display:none}.navChev{display:none}
 @media (min-width:1024px){
   nav{background:#f7f8f7!important;border-right:1px solid #e7eae8!important;padding:18px 12px 14px!important}
   nav:before{height:38px!important;margin:0 8px 22px!important}
@@ -1011,6 +1011,10 @@ body.liveMode #view{max-width:none!important}
   .navIcon{width:19px!important;height:19px!important;flex:0 0 19px!important;color:#6b756f}
   .navCount{display:inline-block;margin-left:auto;font-size:12px;font-weight:500;color:#7b8580;min-width:18px;text-align:right}
   .navCount.late{color:#b42318;font-weight:600}
+  .navChev{display:inline-block;font-size:14px;color:#8a948f;width:10px;text-align:center;transition:transform .12s;margin-left:2px}
+  nav button:not(.on) .navChev{opacity:.6}
+  nav button.subOpen .navChev{transform:rotate(90deg)}
+  [data-navcount="sastanci"][hidden]+.navChev{margin-left:auto}
   nav:after{color:#9aa39f!important}
   .navSub:not([hidden]){margin:2px 0 10px 19px!important;padding:2px 0 2px 0!important;border-left:1px solid #dfe4e1}
   .navSub .mtgSerHead{padding:12px 10px 4px 14px!important;font-size:10.5px!important;letter-spacing:.09em;color:#8a948f}
@@ -1048,12 +1052,12 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="nedjelja"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3v5M16.5 3v5M3.5 10h17"/><path d="m8.5 15 2.2 2.2 4.8-4.7"/></svg></span><span>Moja nedjelja</span><span class="navCount" data-navcount="nedjelja"></span></button>
 <button data-nav="akcije"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span><span>Akcije</span><span class="navCount" data-navcount="akcije"></span></button>
 <button data-nav="projekti"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l1.8 2h9.2v9.5a2 2 0 0 1-2 2h-15z"/><path d="M3.5 7.5V5a2 2 0 0 1 2-2h4l1.8 2h7.2a2 2 0 0 1 2 2v2.5"/></svg></span><span>Projekti</span></button>
-<button data-nav="sastanci"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3v5M16.5 3v5M3.5 10h17M7 14h3M14 14h3M7 17h3"/></svg></span><span>Sastanci</span><span class="navCount" data-navcount="sastanci"></span></button>
+<button data-nav="sastanci"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3v5M16.5 3v5M3.5 10h17M7 14h3M14 14h3M7 17h3"/></svg></span><span>Sastanci</span><span class="navCount" data-navcount="sastanci"></span><span class="navChev" aria-hidden="true">›</span></button>
 <div class="navSub" id="navSubSastanci" hidden></div>
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v95 · 27.11.2026.";
+const APP_VERSION="v96 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1318,7 +1322,7 @@ const meetingsView={tab:"upcoming",search:"",series:"all"};
 function render(){
  document.body.classList.toggle("liveMode",route==="uzivo");
  document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("on",b.dataset.nav===route));
- {const ns=document.getElementById("navSubSastanci");if(ns&&route!=="sastanci"){ns.hidden=true;ns.innerHTML=""}}
+ {const ns=document.getElementById("navSubSastanci");if(ns&&route!=="sastanci"){ns.hidden=true;ns.innerHTML="";document.querySelector('[data-nav="sastanci"]')?.classList.remove("subOpen")}}
  try{updateNavCounts()}catch(e){}
  ({pregled:vPregled,nedjelja:vNedjelja,akcije:vAkcije,projekti:vProjekti,sastanci:vSastanci,beleske:vBeleske,uzivo:vUzivo}[route]||vPregled)();
  bindCards(); bindMenu();
@@ -1575,6 +1579,9 @@ function vProjekti(){
  $("#newProjectSeries").onclick=()=>editSeries(null,false,{Tip:"Projektna"});
  $("#view").querySelectorAll("[data-project-series]").forEach(b=>b.onclick=()=>seriesDialog(Number(b.dataset.projectSeries),{fromProjectsTab:true}));
 }
+function navSubClosed(){try{return localStorage.getItem("obaveze_laptop_navsub_closed")==="1"}catch(e){return false}}
+function navSubToggle(){const c=!navSubClosed();try{c?localStorage.setItem("obaveze_laptop_navsub_closed","1"):localStorage.removeItem("obaveze_laptop_navsub_closed")}catch(e){}
+ const ns=document.getElementById("navSubSastanci");if(ns)ns.hidden=c;const b=document.querySelector('[data-nav="sastanci"]');if(b)b.classList.toggle("subOpen",!c)}
 function updateNavCounts(){
  const set=(k,v,cls="")=>{const el=document.querySelector(`[data-navcount="${k}"]`);if(!el)return;el.textContent=v?String(v):"";el.className="navCount"+(cls?" "+cls:"");el.hidden=!v};
  let mine=0;try{mine=wkData(wkMonday(today())).mineOpen.length}catch(e){}
@@ -1708,7 +1715,8 @@ function vSastanci(onlyResults=false){
    ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(z=>serItem(z,false)).join("")}</details>`:""}`;
  const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(seriesFullName(selSer))}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
  const navSub=$("#navSubSastanci");
- if(desk&&navSub){navSub.innerHTML=asideHTML;navSub.hidden=false}
+ if(desk&&navSub){navSub.innerHTML=asideHTML;navSub.hidden=navSubClosed()}
+ {const nb=document.querySelector('[data-nav="sastanci"]');if(nb)nb.classList.toggle("subOpen",desk&&!navSubClosed())}
  $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgMain">${serHeadHTML}${mainHTML}</div>`:mainHTML);
  document.querySelectorAll("[data-mtg-series]").forEach(b=>b.onclick=()=>{meetingsView.series=b.dataset.mtgSeries;meetingsView.search="";vSastanci()});
  document.querySelectorAll("#navSubSastanci [data-mtg-group]").forEach(d=>d.addEventListener("toggle",()=>{const g=d.dataset.mtgGroup;let c=[];try{c=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}c=c.filter(x=>x!==g);if(!d.open)c.push(g);try{localStorage.setItem("obaveze_laptop_closed_groups",JSON.stringify(c))}catch(e){}}));
@@ -4217,7 +4225,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-95").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-96").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
@@ -4229,7 +4237,10 @@ if("serviceWorker" in navigator){
  });
 }
 if(isStandalone()){
- document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{route=b.dataset.nav;render()});
+ document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{
+  if(b.dataset.nav==="sastanci"&&route==="sastanci"&&isDesktop()){navSubToggle();return}
+  if(b.dataset.nav==="sastanci"&&route!=="sastanci"){try{localStorage.removeItem("obaveze_laptop_navsub_closed")}catch(e){}}
+  route=b.dataset.nav;render()});
  $("#fab").onclick=()=>{if(route==="akcije")editItem(null,"Akcija");else if(route==="projekti")editSeries(null,false,{Tip:"Projektna"});else if(route==="sastanci")editMeeting();else if(route==="beleske")editItem(null,"Beleška");else quickAdd()};
  $("#dlg").addEventListener("click",e=>{if(e.target===$("#dlg"))dismissDlg()});
  $("#dlg").addEventListener("cancel",e=>{e.preventDefault();dismissDlg()});
