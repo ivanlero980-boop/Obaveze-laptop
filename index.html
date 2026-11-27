@@ -965,7 +965,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v88 · 27.11.2026.";
+const APP_VERSION="v89 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1851,6 +1851,12 @@ function itemShareText(x){
  return lines.join("\n");
 }
 
+function confirmRemoveConclusion(cid){
+ const la=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.ZakljucakID)===Number(cid));
+ if(!la.length)return confirm("Ukloniti ovaj zaključak?");
+ if(!confirm(`Ukloniti zaključak zajedno sa zadatkom?\n\n${la.map(a=>`• ${a.Zadatak} — ${a.Odgovoran||"?"}${a.Rok?`, rok ${fmtDate(a.Rok)}`:""}`).join("\n")}\n\nZadatak se briše i iz Akcija i Moje nedjelje.`))return false;
+ const ids=new Set(la.map(a=>Number(a.ID)));S.items=S.items.filter(x=>!ids.has(Number(x.ID)));return true;
+}
 function topicPoints(x,no,actionObj){
  const nt=s=>String(s||"").trim().replace(/\s+/g," ").toLowerCase();
  const concl=x.Zakljucci||[],acts=agendaRelatedItems(x.ID).filter(y=>y.Tip==="Akcija").sort((a,b)=>(a.ID||0)-(b.ID||0)),used=new Set(),pts=[];
@@ -2122,6 +2128,7 @@ function dataUrlBytes(dataUrl){
  for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);
  return out;
 }
+const PDF_SCALE=2.5;
 function pdfFromJpegs(images,pageW=595.28,pageH=841.89){
  const enc=new TextEncoder(),chunks=[],offsets=[0];
  let length=0;
@@ -2180,7 +2187,7 @@ async function buildMinutesPdfBlob(d,extras={},generatedAt=minutesGeneratedAt())
   return out.length?out:[""];
  };
  const newPage=()=>{
-  canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;ctx=canvas.getContext("2d");
+  canvas=document.createElement("canvas");canvas.width=W*PDF_SCALE;canvas.height=H*PDF_SCALE;ctx=canvas.getContext("2d");ctx.scale(PDF_SCALE,PDF_SCALE);
   ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);pages.push(canvas);y=68;
  };
  const ensure=h=>{if(y+h>BOTTOM)newPage()};
@@ -2329,7 +2336,7 @@ async function buildMinutesPdfBlob(d,extras={},generatedAt=minutesGeneratedAt())
   cctx.textAlign="right";cctx.fillText(`Generisano: ${generatedAt}`,W-M,H-24);cctx.textAlign="left";
  });
  const imgs=[];
- for(const c of pages){const url=c.toDataURL("image/jpeg",0.90);imgs.push({width:c.width,height:c.height,bytes:dataUrlBytes(url)})}
+ for(const c of pages){const url=c.toDataURL("image/jpeg",0.94);imgs.push({width:c.width,height:c.height,bytes:dataUrlBytes(url)})}
  return pdfFromJpegs(imgs);
 }
 async function exportMinutesPDF(d,extras={}){
@@ -3162,7 +3169,7 @@ function noteDialog(id){
  if($("#topicDelete"))$("#topicDelete").onclick=()=>{if(confirm(`Ukloni temu \"${n.Zadatak}\" sa sastanka?`)){S.items=S.items.filter(x=>Number(x.ID)!==Number(n.ID));save();norm();render();navBack({type:"deleted",kind:"Agenda",id:n.ID})}};
  const refocusNew=()=>setTimeout(()=>$("#topicConclusionNew")?.focus(),0);
  $("#topicConclusionNew").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!(e.ctrlKey||e.metaKey)){e.preventDefault();if(!e.target.value.trim())return;saveTopic();noteDialog(n.ID);refocusNew()}});
- $("#dlgBody").querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{const cid=Number(b.dataset.cdel),linked=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.ZakljucakID)===cid).length;if(linked&&!confirm(`Za ovaj zaključak je vezano ${linked} akcij${linked===1?"a":"e"}. Akcije ostaju, ali bez veze sa zaključkom. Ukloniti zaključak?`))return;b.closest(".conclRow").remove();saveTopic();noteDialog(n.ID)});
+ $("#dlgBody").querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{const cid=Number(b.dataset.cdel);if(!confirmRemoveConclusion(cid))return;b.closest(".conclRow").remove();saveTopic();noteDialog(n.ID)});
  $("#dlgBody").querySelectorAll("[data-cact]").forEach(b=>b.onclick=()=>{const cid=Number(b.dataset.cact);saveTopic();editItem(null,"Akcija",{Zadatak:"",Oblast:"Poslovno",KolegijumID:n.KolegijumID||null,SerijaID:n.SerijaID||null,ProjekatID:n.PovezaniProjekatID||null,_fromNoteId:n.ID,AgendaIzvorID:n.ID,ZakljucakID:cid})});
  $("#dlgBody").querySelectorAll(".conclAction[data-item]").forEach(el=>el.onclick=()=>{saveTopic();itemDialog(Number(el.dataset.item))});
  if(wsAside){
@@ -3475,7 +3482,7 @@ async function buildClosedReportPdfBlob(entries){
  const GREEN="#00885a",DARK="#1d2924",MUTED="#68736e",LINE="#d9e0dc",LIGHT="#f6f9f7";
  const pages=[];let c,ctx,y;
  const font=(size,weight=400)=>{ctx.font=`${weight} ${size}px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif`};
- const newPage=()=>{c=document.createElement("canvas");c.width=W;c.height=H;ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);pages.push(c);y=M};
+ const newPage=()=>{c=document.createElement("canvas");c.width=W*PDF_SCALE;c.height=H*PDF_SCALE;ctx=c.getContext("2d");ctx.scale(PDF_SCALE,PDF_SCALE);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);pages.push(c);y=M};
  const wrap=(txt,maxW,size=18,weight=400)=>{
   font(size,weight);const paras=String(txt||"").split(/\n/),out=[];
   paras.forEach((p,pi)=>{const words=p.split(/\s+/).filter(Boolean);let line="";words.forEach(w=>{const t=line?line+" "+w:w;if(line&&ctx.measureText(t).width>maxW){out.push(line);line=w}else line=t});if(line)out.push(line);if(pi<paras.length-1)out.push("")});
@@ -3525,7 +3532,7 @@ async function buildClosedReportPdfBlob(entries){
   cc.font='14px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif';cc.fillStyle=MUTED;
   cc.textAlign="left";cc.fillText("Obaveze",M,H-26);cc.textAlign="center";cc.fillText(`Strana ${i+1}/${pages.length}`,W/2,H-26);cc.textAlign="right";cc.fillText(`Generisano: ${generatedAt}`,W-M,H-26);
  });
- const imgs=pages.map(pg=>({width:pg.width,height:pg.height,bytes:dataUrlBytes(pg.toDataURL("image/jpeg",0.90))}));
+ const imgs=pages.map(pg=>({width:pg.width,height:pg.height,bytes:dataUrlBytes(pg.toDataURL("image/jpeg",0.94))}));
  return pdfFromJpegs(imgs);
 }
 async function exportClosedReportPDF(entries){
@@ -3697,7 +3704,7 @@ function renderLiveMain(){
   <section class="lmCard lmConcl">
    <div class="lmLabel"><span>Zaključci${pts.length?` · ${pts.length}`:""}</span><span>Bez odgovornog je odluka · sa odgovornim i rokom je zadatak</span></div>
    ${pts.map(p=>p.cid?`<div class="lcRow"><b class="lcNo">${p.no}</b><textarea class="lcText" rows="1" data-lc-text="${p.cid}" ${locked?"readonly":""}>${esc(p.text)}</textarea>${p.actionId?`<button type="button" class="lcWho" data-live-item="${p.actionId}" title="Otvori zadatak">${esc(p.owner||"?")}${p.due?` · ${esc(p.due)}`:""}${p.done?" · ✓":""}</button>`:(locked?"":`<button type="button" class="lcAssign" data-lc-assign="${p.cid}">+ Odgovorni</button>`)}${locked?"":`<button type="button" class="lcDel" data-lc-del="${p.cid}" aria-label="Ukloni zaključak ${p.no}">Ukloni</button>`}${p.sub?`<div class="lcAct" data-live-item="${p.actionId}">Zadatak: ${esc(p.sub)}</div>`:""}${(p.extra||[]).map(e=>`<div class="lcAct" data-live-item="${e.id}">→ ${esc(e.title)} <span>${esc([e.owner,e.due].filter(Boolean).join(" · "))}</span></div>`).join("")}</div>`
-     :`<div class="lcRow"><b class="lcNo">${p.no}</b><div class="lcText lcTask" data-live-item="${p.actionId}">${esc(p.text)}</div><button type="button" class="lcWho" data-live-item="${p.actionId}">${esc(p.owner||"?")}${p.due?` · ${esc(p.due)}`:""}${p.done?" · ✓":""}</button>${!locked&&concl.length?`<button type="button" class="lcAssign" data-lc-link="${p.actionId}" title="Ako je ovo isti dogovor kao neki zaključak, spoji ih u jedan red">Spoji sa zaključkom</button>`:""}</div>`).join("")}
+     :`<div class="lcRow"><b class="lcNo">${p.no}</b><div class="lcText lcTask" data-live-item="${p.actionId}">${esc(p.text)}</div><button type="button" class="lcWho" data-live-item="${p.actionId}">${esc(p.owner||"?")}${p.due?` · ${esc(p.due)}`:""}${p.done?" · ✓":""}</button>${!locked&&concl.length?`<button type="button" class="lcAssign" data-lc-link="${p.actionId}" title="Ako je ovo isti dogovor kao neki zaključak, spoji ih u jedan red">Spoji sa zaključkom</button>`:""}${locked?"":`<button type="button" class="lcDel" data-lt-del="${p.actionId}">Ukloni</button>`}</div>`).join("")}
    ${locked?"":`<div class="lcNewRow">
     <input id="liveNewConcl" class="lcNew${dr.concl.trim()?" isDraft":""}" placeholder="${idx+1}.${pts.length+1}  ${pts.length?"Sljedeći zaključak…":"Šta je odlučeno ili dogovoreno? — Enter"}" value="${esc(dr.concl)}">
     <input id="laWho" class="laWho" list="livePeople" placeholder="Odgovoran (opciono)" value="${esc(dr.who)}">
@@ -3728,6 +3735,7 @@ function renderLiveMain(){
  if(nc)nc.oninput=()=>{dr.concl=nc.value;markDraft(nc,"#conclDraftNote",!!nc.value.trim());draftChanged()};
  const lwho=$("#laWho");
  if(lwho){lwho.addEventListener("input",()=>{dr.who=lwho.value;const r=$("#laDueRow");if(r)r.hidden=!lwho.value.trim();liveSaveDrafts()});lwho.onkeydown=e=>{if(e.key==="Enter"&&!e.altKey){e.preventDefault();addPoint()}}}
+ box.querySelectorAll("[data-lt-del]").forEach(b=>b.onclick=()=>{const a=S.items.find(x=>Number(x.ID)===Number(b.dataset.ltDel));if(!a)return;if(!confirm(`Obrisati zadatak „${a.Zadatak}“ (${a.Odgovoran||"?"})?\n\nBriše se i iz Akcija i Moje nedjelje.`))return;S.items=S.items.filter(x=>x!==a);liveFlush();save();norm();renderLiveMain();liveRefreshSide()});
  box.querySelectorAll("[data-lc-link]").forEach(b=>b.onclick=()=>{const a=S.items.find(x=>Number(x.ID)===Number(b.dataset.lcLink));if(!a)return;liveFlush();
   navOpen(`<div class="row between"><div><h2>Spoji sa zaključkom</h2><div class="sm mute">${esc(a.Zadatak)} · ${esc(a.Odgovoran||"")}</div></div><button class="btn" id="lklClose">×</button></div><div class="sm mute" style="margin-top:8px">Zadatak ostaje isti (odgovorni, rok, status); u zapisniku se prikazuje uz izabrani zaključak, u jednom redu.</div><div class="list" style="margin-top:12px">${concl.map((c,k)=>`<button class="card tight" data-lkl="${c.ID}" style="text-align:left"><b>${idx+1}.${k+1}</b> ${esc(c.Tekst)}</button>`).join("")}</div>`,`liveLink:${a.ID}`,{dedupe:true});
   $("#lklClose").onclick=navBack;$("#dlgBody").querySelectorAll("[data-lkl]").forEach(x=>x.onclick=()=>{a.ZakljucakID=Number(x.dataset.lkl);save();navBack();renderLiveMain();liveRefreshSide()})});
@@ -3743,8 +3751,7 @@ function renderLiveMain(){
  };
  if(nc)nc.onkeydown=e=>{if(e.key!=="Enter"||e.altKey)return;e.preventDefault();addPoint()};
  box.querySelectorAll("[data-lc-del]").forEach(b=>b.onclick=()=>{
-  const cid=Number(b.dataset.lcDel),linked=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.ZakljucakID)===cid).length;
-  if(linked&&!confirm(`Za ovaj zaključak je vezano ${linked} akcij${linked===1?"a":"e"}. Akcije ostaju, ali bez veze sa zaključkom. Ukloniti zaključak?`))return;
+  const cid=Number(b.dataset.lcDel);if(!confirmRemoveConclusion(cid))return;
   n.Zakljucci=concl.filter(z=>Number(z.ID)!==cid);n.Zakljucak=n.Zakljucci.map(z=>z.Tekst).join("\n");
   S.items.forEach(a=>{if(a.Tip==="Akcija"&&Number(a.ZakljucakID)===cid)a.ZakljucakID=null});
   liveFlush();save();renderLiveMain();liveRefreshSide();
@@ -4039,7 +4046,7 @@ async function buildWeekReportPdfBlob(st,log){
  const font=(s,w=400)=>{ctx.font=`${w} ${s}px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif`};
  const wrap=(t,maxW,s,w)=>{font(s,w);const out=[];String(t||"").split(/\n/).forEach(p=>{let line="";p.split(/\s+/).filter(Boolean).forEach(word=>{const tt=line?line+" "+word:word;if(line&&ctx.measureText(tt).width>maxW){out.push(line);line=word}else line=tt});out.push(line)});return out.length?out:[""]};
  const head=()=>{font(17,700);ctx.fillStyle=GREEN;ctx.fillText("OBAVEZE",M,y+14);ctx.textAlign="right";ctx.fillText("IZVJEŠTAJ NEDJELJE",W-M,y+14);ctx.textAlign="left";y+=36;ctx.strokeStyle=GREEN;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(M,y);ctx.lineTo(W-M,y);ctx.stroke();y+=30};
- const newPage=()=>{c=document.createElement("canvas");c.width=W;c.height=H;ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);pages.push(c);y=M;head()};
+ const newPage=()=>{c=document.createElement("canvas");c.width=W*PDF_SCALE;c.height=H*PDF_SCALE;ctx=c.getContext("2d");ctx.scale(PDF_SCALE,PDF_SCALE);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);pages.push(c);y=M;head()};
  const ensure=hh=>{if(y+hh>CONTENT_BOTTOM)newPage()};
  newPage();
  font(32,700);ctx.fillStyle=DARK;ctx.fillText(`Nedjelja ${wkLabel(st)}`,M,y+28);y+=50;
@@ -4052,7 +4059,7 @@ async function buildWeekReportPdfBlob(st,log){
   y+=28});
  const gen=new Date().toLocaleString("sr-Latn-ME");
  pages.forEach((pg,i)=>{const cc=pg.getContext("2d");cc.strokeStyle=LINE;cc.beginPath();cc.moveTo(M,H-52);cc.lineTo(W-M,H-52);cc.stroke();cc.font='14px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif';cc.fillStyle=MUTED;cc.textAlign="left";cc.fillText("Obaveze",M,H-26);cc.textAlign="center";cc.fillText(`Strana ${i+1}/${pages.length}`,W/2,H-26);cc.textAlign="right";cc.fillText(`Generisano: ${gen}`,W-M,H-26)});
- return pdfFromJpegs(pages.map(pg=>({width:pg.width,height:pg.height,bytes:dataUrlBytes(pg.toDataURL("image/jpeg",0.9))})));
+ return pdfFromJpegs(pages.map(pg=>({width:pg.width,height:pg.height,bytes:dataUrlBytes(pg.toDataURL("image/jpeg",0.94))})));
 }
 async function exportWeekReportPDF(st){
  const log=(S.weekLog||{})[st];if(!log)return;
@@ -4101,7 +4108,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-88").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-89").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
