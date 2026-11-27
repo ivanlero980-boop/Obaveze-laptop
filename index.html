@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-79"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-79"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-80"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-80"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -781,6 +781,107 @@ body.liveMode #view{max-width:none!important}
 .projTag{color:var(--green-deep);font-weight:700}
 .projChip{background:var(--green-soft)!important;border-color:#cfe5d8!important;color:var(--green-deep)!important;font-weight:650}
 .ltProj{display:block;color:var(--green-deep);font-weight:600;margin-top:1px}
+
+.headAction{display:none}
+/* ===== v80: mirniji izgled za rad na računaru ===== */
+@media (min-width:1024px){
+  :root{--line:#e6e9e7;--mute:#6b746f;--bg:#f6f7f6}
+  body{background:var(--bg)}
+  .headAction{display:inline-flex}
+  .fab{display:none!important}
+  /* bočni meni */
+  nav{background:#fff}
+  nav button{font-weight:500;color:#3d4642;border-radius:8px}
+  nav button.on{background:#edf6f0;color:var(--green-deep);font-weight:600}
+  nav button.on:after{display:none}
+  /* zaglavlje ekrana umjesto zelenog banera */
+  .top{background:none!important;color:var(--ink)!important;box-shadow:none!important;border-radius:0!important;margin:0 0 18px!important;padding:28px 0 0!important;align-items:flex-end}
+  .top h1{font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .top .sm{color:var(--mute)!important;margin-top:4px}
+  .top .btn{width:auto!important;height:auto!important;padding:9px 16px!important;display:inline-flex!important;color:#fff!important;background:var(--green)!important;border-color:var(--green)!important;font-size:14px;font-weight:600;border-radius:8px}
+  /* Pregled */
+  .dashboardHero{background:none!important;color:var(--ink)!important;box-shadow:none!important;border-radius:0!important;margin:0 0 6px!important;padding:28px 0 0!important}
+  .heroTop{gap:10px;justify-content:flex-end}
+  .heroTop .headAction{padding:9px 16px;font-size:14px;font-weight:600;border-radius:8px}
+  .menuCircle{border:1px solid #dfe3e1!important;background:#fff!important;color:var(--ink)!important;border-radius:8px!important;width:40px;height:40px}
+  .greeting{font-size:26px!important;color:var(--ink)}
+  .greeting b{font-weight:700}
+  .heroSub{color:var(--mute)!important}
+  .dashboardHero{display:flex!important;align-items:flex-end;gap:14px}
+  .heroTop{order:2;margin:0}
+  .heroBody{order:1;flex:1;margin:0!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:end!important}
+  .priorityCard{background:#fff!important;border:1px solid var(--line)!important;color:var(--ink);border-radius:8px;min-height:0!important;padding:6px 12px!important;flex-direction:row!important;align-items:baseline;gap:8px}
+  .priorityNumber{font-size:18px!important;margin:0!important}
+  .priorityLabel,.priorityFoot{color:var(--mute)!important}
+  .dashboardContent .areaTabs{margin:14px 0 14px!important;justify-content:flex-start;background:#eceeed;border-radius:8px;padding:3px!important;width:max-content}
+  .dashboardContent .areaTabs .btn{border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:13px}
+  .dashboardContent .areaTabs .btn.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06);font-weight:600}
+  .dashboardKpis{gap:0!important;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .summaryTile{background:transparent!important;border:0!important;border-right:1px solid #eef0ef!important;border-radius:0!important;box-shadow:none!important;align-items:flex-start!important;text-align:left!important;padding:14px 18px!important;min-height:0!important}
+  .summaryTile:last-child{border-right:0!important}
+  .summaryTile.zero{opacity:1}
+  .summaryIcon{display:none}
+  .summaryTitle{order:2;font-size:12.5px!important;color:var(--mute)!important;min-height:0!important;justify-content:flex-start!important}
+  .summaryValue{order:1;font-size:24px!important;color:var(--ink)!important;margin:0 0 2px!important}
+  .summaryFoot{display:none}
+  .summaryTile.due .summaryValue{color:#b86e00!important}
+  .summaryTile.zero .summaryValue{color:#a0a8a4!important}
+  .sectionHead h2{font-size:15px;font-weight:700}
+  .sectionLink{font-weight:600}
+  .sectionCard{border-color:var(--line)!important;box-shadow:none!important;border-radius:12px!important}
+  .todayRow:before,.upcomingRow:before{width:3px}
+  .todayRow:not(.late):not(.soon):before{background:transparent}
+  .rowTitle{font-weight:600!important}
+  .rowDue{font-weight:600}
+  /* liste kao redovi u jednom panelu */
+  .app .list,.sheet .list{gap:0!important;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .app .list>.card,.sheet .list>.card,.app .list>button.card,.sheet .list>button.card{border:0!important;border-radius:0!important;box-shadow:none!important;margin:0!important;border-top:1px solid #eef0ef!important}
+  .app .list>.card:first-child,.sheet .list>.card:first-child{border-top:0!important}
+  .app .list>.empty,.sheet .list>.empty{border:0}
+  .card{box-shadow:none;border-color:var(--line);border-radius:12px}
+  [data-item]:hover,[data-note]:hover,[data-meeting]:hover,[data-series-main]:hover,[data-project-series]:hover,[data-dashboard-meeting]:hover,[data-meeting-note]:hover,.menuItem:hover{box-shadow:none!important;background:#f8faf9!important}
+  .secondaryCard:before{background:transparent}
+  .secondaryCard.late:before{background:var(--red)}
+  .secondaryCard.soon:before{background:var(--amber)}
+  .card.tight[style*="border-left"]{border-left-width:3px!important}
+  .taskTitle{font-weight:600}
+  .chip{background:#f3f5f4;border-color:transparent;color:#4d5651}
+  .chip.person{background:transparent;border-color:transparent;color:#3d4642;padding-left:0}
+  .chip.date{background:transparent;color:#3d4642}
+  .secondaryIcon{display:none}
+  .projectLead,.noteLead{gap:0}
+  .countBadge{min-width:0!important;min-height:0!important;padding:2px 8px!important;background:#f0f2f1!important;color:#4d5651!important;font-weight:600!important}
+  .subProject{margin-left:0!important;border-left:0!important;padding-left:40px!important}
+  /* filteri */
+  .tabs .btn{border-radius:8px}
+  .tabs .btn.on{background:#edf6f0;border-color:#d6eadf}
+  .actionSearch,.filterBar input{border-radius:8px}
+  /* glavne komande koje su sada u zaglavlju */
+  .app .btnrow:has(#newProjectSeries),.app .btnrow:has(#newMeetingMain){display:none}
+  /* paneli sastanaka */
+  .mtgSeries{border-color:var(--line)}
+  .mtgSer.on{background:#edf6f0;border-color:transparent}
+  /* sastanak: jedna glavna komanda */
+  .meetingTopActions{gap:8px;margin-top:12px!important;flex-wrap:wrap}
+  .meetingTopActions .btnrow{flex:0 0 auto!important;gap:8px}
+  .meetingTopActions .btn{flex:0 0 auto!important;width:auto!important;padding:8px 13px!important;font-size:13.5px;border-radius:8px}
+  .meetingTopActions #meetingLive{margin-left:auto!important;padding:9px 18px!important;font-weight:600}
+  .sheet .meetingKpis{gap:18px!important;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .sheet .meetingKpis .kpi{background:none!important;border:0!important;padding:0!important}
+  .sheet .meetingKpis .xs{letter-spacing:.02em;text-transform:none;font-size:13px;font-weight:500}
+  .sheet .seriesReview{background:#fafbfa;border-color:var(--line)}
+  .meetingAddGrid .btn{padding:8px 12px;font-size:13.5px;border-radius:8px}
+  .btn{border-radius:8px}
+  .btn.pri,.pri{font-weight:600}
+  .sheet{background:#f8f9f8}
+  .sheet h2{font-weight:700}
+}
+
+/* v80: sastanci na Pregledu neutralno, osim kašnjenja */
+@media (min-width:1024px){
+  .dashboardContent [data-dashboard-meeting]:not(.late) .rowDue{color:#3d4642}
+  .dateDay{color:var(--ink)!important}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -791,7 +892,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v79 · 27.11.2026.";
+const APP_VERSION="v80 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1043,7 +1144,7 @@ function taskCard(x){
   <div class="taskTitle">${esc(x.Zadatak)}</div>
   <div class="meta">
    ${x.Odgovoran?`<span class="chip person">${esc(x.Odgovoran)}</span>`:""}
-   ${x.Znacaj?`<span class="chip ${priClass}">${esc(x.Znacaj)}</span>`:""}${x.Prioritet?`<span class="chip">${esc(x.Prioritet)}</span>`:""}
+   ${x.Znacaj==="Strateško"?`<span class="chip ${priClass}">${esc(x.Znacaj)}</span>`:""}${(x.Prioritet==="Visok"||x.Prioritet==="Nizak")?`<span class="chip">${esc(x.Prioritet)}</span>`:""}
    ${projectName?`<span class="chip">${esc(projectName)}</span>`:""}
    ${x.Rok?`<span class="chip date">${esc(fmtDate(x.Rok))}</span>`:""}
   </div>
@@ -1060,8 +1161,10 @@ function render(){
  bindCards(); bindMenu();
 }
 function head(title,sub=""){
- return `<div class="top"><div><h1>${esc(title)}</h1>${sub?`<div class="sm mute">${esc(sub)}</div>`:""}</div></div>`;
+ const lbl={akcije:"+ Nova akcija",projekti:"+ Novi projekat",sastanci:"+ Novi sastanak",beleske:"+ Nova beleška"}[route];
+ return `<div class="top"><div><h1>${esc(title)}</h1>${sub?`<div class="sm mute">${esc(sub)}</div>`:""}</div>${lbl?`<button class="btn pri headAction">${lbl}</button>`:""}</div>`;
 }
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".headAction");if(!b)return;if(route==="sastanci"&&$("#newMeetingMain"))$("#newMeetingMain").click();else $("#fab").click()});
 function vPregled(){
  const actions=activeActions().filter(x=>(x.Oblast||"Poslovno")===dashboardArea&&(x.Odgovoran||"")==="Ivan");
  const ps=dashboardArea==="Poslovno"?projectSeries():[];
@@ -1108,7 +1211,7 @@ function vPregled(){
 
  const overdueHTML=overdue.map(x=>`<div class="todayRow late" data-item="${x.ID}">
    <button class="checkBox" data-done="${x.ID}" aria-label="Označi kao završeno"></button>
-   <div><div class="rowTitle">${esc(x.Zadatak)}</div><div class="rowMeta">${esc(x.Izvor||x.Projekat||x.Sistem||"Akcija")}${x.Prioritet?` · ${esc(x.Prioritet)}`:""}</div></div>
+   <div><div class="rowTitle">${esc(x.Zadatak)}</div><div class="rowMeta">${esc(x.Izvor||x.Projekat||x.Sistem||"Akcija")}${(x.Prioritet==="Visok"||x.Prioritet==="Nizak")?` · ${esc(x.Prioritet)}`:""}</div></div>
    <div class="rowDue">Kasni ${Math.abs(daysTo(x.Rok))} d</div><span class="starMark ${x.Znacaj==="Strateško"?"strategic":""}">${x.Znacaj==="Strateško"?"★":""}</span>
   </div>`).join("");
 
@@ -1116,7 +1219,7 @@ function vPregled(){
    const d=daysTo(x.Rok),cls=d<0?"late":d<=1?"soon":"";
    return `<div class="todayRow ${cls}" data-item="${x.ID}">
      <button class="checkBox" data-done="${x.ID}" aria-label="Označi kao završeno"></button>
-     <div><div class="rowTitle">${esc(x.Zadatak)}</div><div class="rowMeta">${esc(x.Izvor||x.Projekat||x.Sistem||"Akcija")}${x.Prioritet?` · ${esc(x.Prioritet)}`:""}</div></div>
+     <div><div class="rowTitle">${esc(x.Zadatak)}</div><div class="rowMeta">${esc(x.Izvor||x.Projekat||x.Sistem||"Akcija")}${(x.Prioritet==="Visok"||x.Prioritet==="Nizak")?` · ${esc(x.Prioritet)}`:""}</div></div>
      <div class="rowDue">Danas</div><span class="starMark ${x.Znacaj==="Strateško"?"strategic":""}" aria-label="${x.Znacaj==="Strateško"?"Strateško":""}">${x.Znacaj==="Strateško"?"★":""}</span>
    </div>`;
  }).join(""):`<div class="dashboardEmpty">Nema akcija sa rokom danas.</div>`;
@@ -1124,6 +1227,7 @@ function vPregled(){
  $("#view").innerHTML=`<section class="dashboardHero">
   <div class="heroTop">
    <div class="logoPlate"><img src="./logo-grawe-2021.png" alt="GRAWE"></div>
+   <button class="btn pri headAction">+ Novo</button>
    <button class="menuCircle" id="menuBtn" aria-label="Meni">☰</button>
   </div>
   <div class="heroBody">
@@ -1171,9 +1275,9 @@ function vPregled(){
 }
 function actionListCard(x){
  const d=daysTo(x.Rok);
- const cls=d<0?"late":d<=7?"soon":x.Znacaj==="Strateško"?"strategic":"";
+ const cls=d<0?"late":d===0?"soon":x.Znacaj==="Strateško"?"strategic":"";
  const due=x.Rok?(d<0?`Kasni ${Math.abs(d)} d`:d===0?"Danas":fmtDate(x.Rok)):"Bez roka";
- const dueCls=d<0?"late":d<=7?"soon":"";
+ const dueCls=d<0?"late":d===0?"soon":"";
  const chips=[
   x.Znacaj==="Strateško"?`<span class="chip priority strategic">Strateško</span>`:"",
   (x.Prioritet==="Visok"||x.Prioritet==="Nizak")?`<span class="chip">${esc(x.Prioritet)}</span>`:""
@@ -1260,7 +1364,7 @@ function vAkcije(){
 }
 const noteView={importance:"all",priority:"all",search:""};
 function vBeleske(onlyResults=false){
- let ns=notes().filter(n=>n.Status!=="Arhivirana"&&n.Status!=="Završeno");
+ let ns=realNotes().filter(n=>n.Status!=="Arhivirana"&&n.Status!=="Završeno");
  if(noteView.importance!=="all")ns=ns.filter(n=>(n.Znacaj||"Operativno")===noteView.importance);
  if(noteView.priority!=="all")ns=ns.filter(n=>(n.Prioritet||"Normalan")===noteView.priority);
  if(noteView.search){
@@ -1268,7 +1372,7 @@ function vBeleske(onlyResults=false){
   ns=ns.filter(n=>[n.Zadatak,n.Tekst,n.Napomena,n.Zakljucak,n.IzDiskusije].filter(Boolean).join(" ").toLowerCase().includes(q));
  }
  ns=ns.slice().sort((a,b)=>(b.ID||0)-(a.ID||0));
- const noteListHTML=ns.map(n=>`<div class="card noteCard" data-note="${n.ID}"><div class="noteLead"><div class="secondaryIcon">${ICONS.note}</div><div class="grow"><div class="taskTitle">${esc(n.Zadatak)}</div><div class="meta"><span class="chip">${esc(n.Oblast||"Poslovno")}</span>${n.Znacaj==="Strateško"?`<span class="chip priority strategic">Strateško</span>`:""}${(n.Prioritet==="Visok"||n.Prioritet==="Nizak")?`<span class="chip">${esc(n.Prioritet)}</span>`:""}</div></div></div></div>`).join("")||`<div class="empty">Nema aktivnih beleški za izabrane filtere.</div>`;
+ const noteListHTML=ns.map(n=>`<div class="card noteCard" data-note="${n.ID}"><div class="noteLead"><div class="secondaryIcon">${ICONS.note}</div><div class="grow"><div class="taskTitle">${esc(n.Zadatak)}</div><div class="meta">${n.Oblast==="Privatno"?`<span class="chip">Privatno</span>`:""}${n.Znacaj==="Strateško"?`<span class="chip priority strategic">Strateško</span>`:""}${(n.Prioritet==="Visok"||n.Prioritet==="Nizak")?`<span class="chip">${esc(n.Prioritet)}</span>`:""}</div></div></div></div>`).join("")||`<div class="empty">Nema aktivnih beleški za izabrane filtere.</div>`;
  if(onlyResults&&$("#noteResults")){
   $("#noteResults").innerHTML=noteListHTML;
   const sub=$("#view .top .sm");if(sub)sub.textContent=`${ns.length} aktivnih`;
@@ -3591,7 +3695,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-79").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-80").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
