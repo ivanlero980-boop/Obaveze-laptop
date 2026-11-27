@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-75"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-75"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-76"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-76"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -764,6 +764,14 @@ body.liveMode #view{max-width:none!important}
   .mtgGroup>summary:hover{background:#f6f8f7}
   .mtgGroup .mtgSer{padding-left:24px}
 }
+
+/* v76: redovni / ad hoc */
+@media (min-width:1024px){
+  .mtgSec{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .mtgBlockHead{display:flex;align-items:baseline;gap:8px;margin:16px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  .mtgBlockHead:first-child{margin-top:0}
+  .mtgBlockHead span{font-weight:700;letter-spacing:0}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -774,7 +782,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v75 · 27.11.2026.";
+const APP_VERSION="v76 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1338,10 +1346,16 @@ function vSastanci(onlyResults=false){
    const ms=seriesMeetings(s.ID),open=seriesOpenActions(s.ID),last=ms.slice().sort((a,b)=>(b.Datum||"").localeCompare(a.Datum||""))[0];
    return `<div class="card tight seriesCard" data-series-main="${s.ID}"><div class="row between"><div class="grow"><b>${esc(s.Naziv)}</b><div class="sm mute">Serija${last?` · posljednji ${esc(fmtDate(last.Datum))}`:" · bez termina"}</div><div class="sm mute" style="margin-top:4px">${ms.length} termina · ${open.length} otvorenih akcija</div></div><span>›</span></div></div>`;
   }).join("")||`<div class="empty">Još nema serija sastanaka.</div>`}</div>`;
+ const splitList=(arr,emptyTxt)=>{
+  if(!(desk&&selSeries==="all"))return `<div class="list">${arr.map(card).join("")||`<div class="empty">${emptyTxt}</div>`}</div>`;
+  const reg=arr.filter(m=>m.SerijaID),adh=arr.filter(m=>!m.SerijaID);
+  if(!arr.length)return `<div class="empty">${emptyTxt}</div>`;
+  return `${reg.length?`<div class="mtgBlockHead">Redovni sastanci <span>${reg.length}</span></div><div class="list">${reg.map(card).join("")}</div>`:""}${adh.length?`<div class="mtgBlockHead">Ad hoc <span>${adh.length}</span></div><div class="list">${adh.map(card).join("")}</div>`:""}`;
+ };
  const resultsHTML=meetingsView.tab==="upcoming"
-    ?`<div class="list">${upcoming.map(card).join("")||`<div class="empty">Nema predstojećih sastanaka.</div>`}</div>`
+    ?splitList(upcoming,"Nema predstojećih sastanaka.")
     :meetingsView.tab==="held"
-     ?`<div class="list">${held.map(card).join("")||`<div class="empty">Nema održanih sastanaka.</div>`}</div>`
+     ?splitList(held,"Nema održanih sastanaka.")
      :seriesHTML;
  const tabsHTML=`<button class="btn ${meetingsView.tab==="upcoming"?"on":""}" data-meeting-tab="upcoming">Predstojeći <span class="countBadge">${upcoming.length}</span></button>
    <button class="btn ${meetingsView.tab==="held"?"on":""}" data-meeting-tab="held">Održani <span class="countBadge">${held.length}</span></button>
@@ -1360,13 +1374,7 @@ function vSastanci(onlyResults=false){
    <button class="btn ${meetingsView.tab==="series"?"on":""}" data-meeting-tab="series">Serije <span class="countBadge">${recurringSeries().length}</span></button>
   </div>
   <label class="actionSearch"><span aria-hidden="true">⌕</span><input id="meetingSearchMain" type="search" placeholder="${meetingsView.tab==="series"?"Pretraži serije":"Pretraži sastanke"}" value="${esc(meetingsView.search)}"></label>
-  <div style="margin-top:12px" id="meetingResults">${
-   meetingsView.tab==="upcoming"
-    ?`<div class="list">${upcoming.map(card).join("")||`<div class="empty">Nema predstojećih sastanaka.</div>`}</div>`
-    :meetingsView.tab==="held"
-     ?`<div class="list">${held.map(card).join("")||`<div class="empty">Nema održanih sastanaka.</div>`}</div>`
-     :seriesHTML
-  }</div>`;
+  <div style="margin-top:12px" id="meetingResults">${resultsHTML}</div>`;
  const nextOf=id=>seriesMeetings(id).filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""))[0];
  const sItem=(key,label,sub,count)=>`<button class="mtgSer${String(selSeries)===String(key)?" on":""}" data-mtg-series="${key}"><span class="mtgSerText"><span class="mtgSerName">${label}</span>${sub?`<small>${sub}</small>`:""}</span>${count?`<span class="countBadge" title="Otvorene akcije">${count}</span>`:""}</button>`;
  const act=recurringSeries().filter(z=>z.Status!=="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
@@ -1380,11 +1388,13 @@ function vSastanci(onlyResults=false){
   const openCount=g.items.reduce((n,z)=>n+seriesOpenActions(z.ID).length,0);
   return `<details class="mtgGroup" data-mtg-group="${esc(g.group)}" ${open?"open":""}><summary><span>${esc(g.group)}</span><small>${g.items.length}${openCount?` · ${openCount} otv.`:""}</small></summary>${g.items.map(z=>serItem(z,true)).join("")}</details>`;
  }).join("");
- const asideHTML=`<div class="mtgSerHead">Serije</div>
-   ${sItem("all","Svi sastanci","",0)}
+ const adhocUpcoming=all.filter(m=>!m.SerijaID&&m.Status!=="Završen"&&m.Datum>=today()).length;
+ const asideHTML=`${sItem("all","Svi sastanci","",0)}
+   <div class="mtgSerHead mtgSec">Redovni sastanci</div>
    ${groupedHTML||`<div class="sm mute" style="padding:8px 10px">Još nema serija.</div>`}
-   ${sItem("adhoc","Ad hoc sastanci","bez serije",0)}
    <button class="btn mtgSerNew" id="newSeriesSide">+ Nova serija</button>
+   <div class="mtgSerHead mtgSec">Ad hoc</div>
+   ${sItem("adhoc","Ad hoc sastanci",adhocUpcoming?`${adhocUpcoming} predstojeć${adhocUpcoming===1?"i":"a"}`:"bez serije",0)}
    ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(z=>serItem(z,false)).join("")}</details>`:""}`;
  const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(seriesFullName(selSer))}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
  $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgLayout"><aside class="mtgSeries">${asideHTML}</aside><div class="mtgMain">${serHeadHTML}${mainHTML}</div></div>`:mainHTML);
@@ -3536,7 +3546,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-75").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-76").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
