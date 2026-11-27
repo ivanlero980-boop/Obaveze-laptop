@@ -984,7 +984,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v91 · 27.11.2026.";
+const APP_VERSION="v92 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -3692,7 +3692,7 @@ function vUzivo(){
 function liveRefreshSide(){if(route!=="uzivo")return;renderLiveAgenda();renderLiveMinutes()}
 function liveSelectTopic(id,focus=true){
  liveFlush();liveView.topicId=id;renderLiveAgenda();renderLiveMain();renderLiveMinutes();
- if(focus)setTimeout(()=>$("#liveNewConcl")?.focus(),0);
+ if(focus)setTimeout(()=>{const ds=$("#liveDisc");if(ds&&!ds.readOnly){ds.focus();ds.setSelectionRange(ds.value.length,ds.value.length)}else $("#liveNewConcl")?.focus()},0);
 }
 function renderLiveAgenda(){
  const m=meetingById(liveView.meetingId),box=$("#liveAgenda");if(!m||!box)return;
@@ -3725,6 +3725,10 @@ function renderLiveMain(){
  const locked=m.Status==="Završen";
  box.innerHTML=`<div class="lmTop"><div><div class="lmIdx">Tema ${idx+1} od ${topics.length}</div><h1>${esc(n.Zadatak)}</h1>${topicLinkTags(n)?`<div class="sm mute" style="margin-top:4px">${topicLinkTags(n)}</div>`:""}</div>
    <div class="lmNav"><button class="btn" id="livePrev" ${idx<=0?"disabled":""}>‹ Prethodna</button><button class="btn lmNext" id="liveNext" ${idx>=topics.length-1?"disabled":""}>Sljedeća tema ›</button></div></div>
+  <section class="lmCard lmDisc">
+   <div class="lmLabel"><span>Iz diskusije</span><span>kratke teze · Enter = nova teza · Tab → zaključci</span></div>
+   <textarea id="liveDisc" placeholder="• glavna poenta iz razgovora…" ${locked?"readonly":""}>${esc(n.IzDiskusije||"")}</textarea>
+  </section>
   <section class="lmCard lmConcl">
    <div class="lmLabel"><span>Zaključci${pts.length?` · ${pts.length}`:""}</span><span>Bez odgovornog je odluka · sa odgovornim i rokom je zadatak</span></div>
    ${pts.map(p=>p.cid?`<div class="lcRow"><b class="lcNo">${p.no}</b><textarea class="lcText" rows="1" data-lc-text="${p.cid}" ${locked?"readonly":""}>${esc(p.text)}</textarea>${p.actionId?`<button type="button" class="lcWho" data-live-item="${p.actionId}" title="Otvori zadatak">${esc(p.owner||"?")}${p.due?` · ${esc(p.due)}`:""}${p.done?" · ✓":""}</button>`:(locked?"":`<button type="button" class="lcAssign" data-lc-assign="${p.cid}">+ Odgovorni</button>`)}${locked?"":`<button type="button" class="lcDel" data-lc-del="${p.cid}" aria-label="Ukloni zaključak ${p.no}">Ukloni</button>`}${p.sub?`<div class="lcAct" data-live-item="${p.actionId}">Zadatak: ${esc(p.sub)}</div>`:""}${(p.extra||[]).map(e=>`<div class="lcAct" data-live-item="${e.id}">→ ${esc(e.title)} <span>${esc([e.owner,e.due].filter(Boolean).join(" · "))}</span></div>`).join("")}</div>`
@@ -3736,10 +3740,6 @@ function renderLiveMain(){
    <div class="laRow laDueRow" id="laDueRow" ${dr.who.trim()?"":"hidden"}><span class="sm mute">Rok</span>${dueBtn("today","Danas")}${dueBtn("tomorrow","Sjutra")}${dueBtn("7","7 dana")}${nextDate?dueBtn("next","Do sljedećeg sastanka"):""}<input type="date" id="laDate" class="laDate" value="${esc(dueVal)}" aria-label="Datum roka"></div>
    <div class="draftNote" id="conclDraftNote" ${dr.concl.trim()?"":"hidden"}>Nacrt — nije dodat u zapisnik dok ne pritisneš Enter</div>
    <datalist id="livePeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>`}
-  </section>
-  <section class="lmCard lmDisc">
-   <div class="lmLabel"><span>Iz diskusije</span><span>kratke teze · Enter = nova teza · nije zaključak</span></div>
-   <textarea id="liveDisc" placeholder="• glavna poenta iz razgovora…" ${locked?"readonly":""}>${esc(n.IzDiskusije||"")}</textarea>
   </section>
   <div class="lmToggles">
    <label><input type="checkbox" id="liveCarry" ${n.PrenesiDalje?"checked":""} ${(n.PrenesenoNaSastanakID||locked)?"disabled":""}> ${n.PrenesenoNaSastanakID?"Tema je prenesena":"Prenesi temu na sljedeći sastanak"}</label>
@@ -4132,7 +4132,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-91").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-92").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
