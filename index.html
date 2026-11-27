@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-72"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-72"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-73"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-73"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -732,6 +732,25 @@ body.liveMode #view{max-width:none!important}
 .isDraft{border-color:var(--amber)!important;background:var(--amber-soft)!important}
 .draftNote{font-size:12px;color:#8a5a0c;margin-top:5px}
 .ltDraft{color:#8a5a0c;font-style:normal;font-weight:700}
+
+/* v73: Sastanci — serije lijevo (laptop) */
+@media (min-width:1024px){
+  .mtgLayout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:26px;align-items:start}
+  .mtgSeries{position:sticky;top:16px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 10px;max-height:calc(100vh - 32px);overflow:auto}
+  .mtgSerHead{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:4px 10px 8px}
+  .mtgSer{width:100%;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:8px 10px;margin-bottom:2px;font-size:14px}
+  .mtgSer:hover{background:#f6f8f7}
+  .mtgSer.on{background:var(--green-soft);border-color:#cfe5d8;color:var(--green-deep)}
+  .mtgSerText{flex:1;min-width:0;display:flex;flex-direction:column}
+  .mtgSerName{font-weight:650;line-height:1.3;overflow-wrap:anywhere}
+  .mtgSer small{font-size:11.5px;color:var(--mute);margin-top:1px}
+  .mtgSer .countBadge{min-width:28px;min-height:22px;padding:2px 7px}
+  .mtgSerNew{width:100%;margin-top:8px;font-size:13.5px}
+  .mtgSerDone{margin-top:10px;padding:0 4px}.mtgSerDone summary{font-size:12.5px;color:var(--mute);cursor:pointer;padding:6px}
+  .mtgSerTitle{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin:2px 0 14px}
+  .mtgSerTitle h2{font-size:20px;letter-spacing:-.01em}
+  .mtgMain [data-meeting-tab="series"]{display:none}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -742,7 +761,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v72 · 27.11.2026.";
+const APP_VERSION="v73 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -968,7 +987,7 @@ function taskCard(x){
 let route="pregled",dashboardArea="Poslovno";
 const actionView={scope:"mine",area:"all",importance:"all",priority:"all",search:"",laterOpen:false};
 let notesView="standalone";
-const meetingsView={tab:"upcoming",search:""};
+const meetingsView={tab:"upcoming",search:"",series:"all"};
 function render(){
  document.body.classList.toggle("liveMode",route==="uzivo");
  document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("on",b.dataset.nav===route));
@@ -1260,6 +1279,12 @@ function meetingsDialog(){
 }
 function vSastanci(onlyResults=false){
  const all=(S.meetings||[]).slice();
+ const desk=isDesktop();
+ if(desk&&meetingsView.tab==="series")meetingsView.tab="upcoming";
+ if(meetingsView.series!=="all"&&meetingsView.series!=="adhoc"&&!seriesById(meetingsView.series))meetingsView.series="all";
+ const selSeries=desk?meetingsView.series:"all";
+ const selSer=selSeries!=="all"&&selSeries!=="adhoc"?seriesById(selSeries):null;
+ const inScope=m=>selSeries==="all"?true:selSeries==="adhoc"?!m.SerijaID:Number(m.SerijaID)===Number(selSeries);
  const q=(meetingsView.search||"").trim().toLocaleLowerCase();
  const matchesMeeting=m=>{
   if(!q)return true;
@@ -1274,7 +1299,7 @@ function vSastanci(onlyResults=false){
    <div class="meta" style="margin-top:7px">${status?`<span class="chip">${status}</span>`:""}<span class="chip">${allA.length} akcija</span>${a.length?`<span class="chip">${a.length} otvoreno</span>`:""}${late?`<span class="chip">${late} kasni</span>`:""}</div>
   </div>`;
  };
- const filtered=all.filter(matchesMeeting);
+ const filtered=all.filter(m=>inScope(m)&&matchesMeeting(m));
  const upcoming=filtered.filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||"")||(a.ID||0)-(b.ID||0));
  const held=filtered.filter(m=>m.Status==="Završen"||m.Datum<today()).sort((a,b)=>(b.Datum||"").localeCompare(a.Datum||"")||(b.ID||0)-(a.ID||0));
  const ss=recurringSeries().filter(s=>!q||[s.Naziv,s.Tip,s.Cilj].filter(Boolean).join(" ").toLocaleLowerCase().includes(q)).slice().sort((a,b)=>(a.Status==="Završen")-(b.Status==="Završen")||(a.Naziv||"").localeCompare(b.Naziv||""));
@@ -1296,7 +1321,7 @@ function vSastanci(onlyResults=false){
   $("#view").querySelectorAll("[data-series-main]").forEach(b=>b.onclick=()=>seriesDialog(Number(b.dataset.seriesMain),{fromMeetingsTab:true}));
  };
  if(onlyResults&&$("#meetingResults")){$("#meetingTabs").innerHTML=tabsHTML;$("#meetingResults").innerHTML=resultsHTML;bindResults();return}
- $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+`
+ const mainHTML=`
   <div class="btnrow" style="margin-bottom:10px"><button class="btn pri grow" id="newMeetingMain">+ Novi sastanak</button>${meetingsView.tab==="series"?`<button class="btn grow" id="newSeriesMain">+ Nova serija</button>`:""}</div>
   <div class="tabs" id="meetingTabs">
    <button class="btn ${meetingsView.tab==="upcoming"?"on":""}" data-meeting-tab="upcoming">Predstojeći <span class="countBadge">${upcoming.length}</span></button>
@@ -1311,7 +1336,23 @@ function vSastanci(onlyResults=false){
      ?`<div class="list">${held.map(card).join("")||`<div class="empty">Nema održanih sastanaka.</div>`}</div>`
      :seriesHTML
   }</div>`;
- $("#newMeetingMain").onclick=()=>editMeeting();
+ const nextOf=id=>seriesMeetings(id).filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""))[0];
+ const sItem=(key,label,sub,count)=>`<button class="mtgSer${String(selSeries)===String(key)?" on":""}" data-mtg-series="${key}"><span class="mtgSerText"><span class="mtgSerName">${label}</span>${sub?`<small>${sub}</small>`:""}</span>${count?`<span class="countBadge" title="Otvorene akcije">${count}</span>`:""}</button>`;
+ const act=recurringSeries().filter(z=>z.Status!=="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
+ const fin=recurringSeries().filter(z=>z.Status==="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
+ const serItem=z=>{const nx=nextOf(z.ID),open=seriesOpenActions(z.ID).length;return sItem(z.ID,esc(z.Naziv),nx?`sljedeći ${esc(fmtDate(nx.Datum))}`:"nema zakazanog",open)};
+ const asideHTML=`<div class="mtgSerHead">Serije</div>
+   ${sItem("all","Svi sastanci","",0)}
+   ${act.map(serItem).join("")||`<div class="sm mute" style="padding:8px 10px">Još nema serija.</div>`}
+   ${sItem("adhoc","Ad hoc sastanci","bez serije",0)}
+   <button class="btn mtgSerNew" id="newSeriesSide">+ Nova serija</button>
+   ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(serItem).join("")}</details>`:""}`;
+ const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(selSer.Naziv)}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
+ $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgLayout"><aside class="mtgSeries">${asideHTML}</aside><div class="mtgMain">${serHeadHTML}${mainHTML}</div></div>`:mainHTML);
+ $("#view").querySelectorAll("[data-mtg-series]").forEach(b=>b.onclick=()=>{meetingsView.series=b.dataset.mtgSeries;meetingsView.search="";vSastanci()});
+ if($("#newSeriesSide"))$("#newSeriesSide").onclick=()=>editSeries(null,false);
+ if($("#mtgSerDetail"))$("#mtgSerDetail").onclick=()=>seriesDialog(selSer.ID,{fromMeetingsTab:true});
+ $("#newMeetingMain").onclick=()=>selSer&&selSer.Status!=="Završen"?editMeeting({ID:0,Datum:today(),Naslov:"",Napomena:"",SerijaID:selSer.ID,Sistem:selSer.Sistem||"Osiguranje",Ucesnici:(selSer.Ucesnici||[]).slice()},true):editMeeting();
  if($("#newSeriesMain"))$("#newSeriesMain").onclick=()=>editSeries(null,false);
  $("#meetingSearchMain").oninput=e=>{meetingsView.search=e.target.value;vSastanci(true)};
  bindResults();
@@ -3445,7 +3486,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-72").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-73").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
