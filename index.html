@@ -954,6 +954,25 @@ body.liveMode #view{max-width:none!important}
 .discList{margin:0;padding-left:18px}.discList li{margin:2px 0}.discPara{white-space:pre-wrap}
 .lcNewRow{display:grid;grid-template-columns:1fr 220px;gap:8px;margin-top:6px}.lcWho{border:1px solid #dfe3e1;background:#f6f9f7;border-radius:7px;padding:4px 9px;font-size:12.5px;white-space:nowrap;align-self:start;margin-top:6px}.lcAssign{border:1px dashed #cfd6d2;background:#fff;border-radius:7px;padding:4px 9px;font-size:12.5px;color:#5f6b65;white-space:nowrap;align-self:start;margin-top:6px}
 .lcTask{cursor:pointer;padding:6px 0}.lmDisc textarea{width:100%;min-height:70px;resize:vertical;font-size:15px;line-height:1.5}
+@media print{
+ body>*:not(#dlg){display:none!important}
+ html,body{background:#fff!important}
+ #dlg{position:static!important;inset:auto!important;width:auto!important;max-width:none!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;overflow:visible!important;transform:none!important;background:#fff!important}
+ #dlg::backdrop{display:none!important;background:none!important}
+ #dlgBody,.sheet{max-height:none!important;height:auto!important;overflow:visible!important;padding:0!important;box-shadow:none!important;border:0!important;width:auto!important}
+ #dlgBody>.row.between,.minutesActions,#minBack,.minutesEdit,#dlgBody button{display:none!important}
+ .proMinutesPreview{border:0!important;box-shadow:none!important;padding:0!important}
+ #dlgBody textarea,#dlgBody input{border:0!important;background:none!important;resize:none!important;padding:0!important;box-shadow:none!important;overflow:visible!important}
+ .minutesSection:has(textarea:placeholder-shown),.proPeople label:has(textarea:placeholder-shown){display:none!important}
+ .ptRow,.proTopic{break-inside:avoid}
+ .proNoWrap:has(input:placeholder-shown){display:none!important}
+ #dlg,#dlgBody,.sheet,.proMinutesPreview{border-radius:0!important;max-width:none!important;width:100%!important;left:auto!important;right:auto!important;top:auto!important}
+ #dlgBody textarea{min-height:0!important;height:auto!important;field-sizing:content}
+ @page{size:A4;margin:16mm 14mm}
+ dialog,dialog:modal,#dlg:modal{outline:0!important;border:0!important;box-shadow:none!important}
+ #dlg *:focus{outline:none!important}
+ #dlg *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -965,7 +984,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v89 · 27.11.2026.";
+const APP_VERSION="v90 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -2400,7 +2419,7 @@ function meetingMinutesDialog(meetingId,tempExtras=null){
 
  navOpen(`<div class="row between"><div><h2>Pregled zapisnika</h2><div class="sm mute">Dokument se automatski popunjava iz sastanka. Ručno koriguješ samo nekoliko polja u zaglavlju i opcionu napomenu.</div></div><button class="btn" id="minClose">×</button></div>
   <div class="proMinutesPreview">
-   <div class="proBrand"><img src="./logo-grawe-2021.png" alt="GRAWE"><div><div class="proDocType">ZAPISNIK</div><div class="proDocTitle">${esc(d.title)}</div><div class="proDocMeta">${esc(d.date||"—")} · <input id="minMeetingNo" class="proInlineInput" inputmode="numeric" value="${esc(extras.meetingNo||"")}" placeholder="broj">. sastanak</div></div></div>
+   <div class="proBrand"><img src="./logo-grawe-2021.png" alt="GRAWE"><div><div class="proDocType">ZAPISNIK</div><div class="proDocTitle">${esc(d.title)}</div><div class="proDocMeta">${esc(d.date||"—")}<span class="proNoWrap"> · <input id="minMeetingNo" class="proInlineInput" inputmode="numeric" value="${esc(extras.meetingNo||"")}" placeholder="broj">. sastanak</span></div></div></div>
    <div class="proPeople">
     <label><span>Prisustvovali</span><textarea id="minPresent" class="minutesFreeText">${esc(extras.present||"")}</textarea></label>
     <label><span>Odsutni</span><textarea id="minAbsent" class="minutesFreeText" placeholder="Opciono">${esc(extras.absent||"")}</textarea></label>
@@ -4108,7 +4127,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-89").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-90").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
