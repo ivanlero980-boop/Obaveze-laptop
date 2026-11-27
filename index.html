@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-73"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-73"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-74"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-74"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -751,6 +751,19 @@ body.liveMode #view{max-width:none!important}
   .mtgSerTitle h2{font-size:20px;letter-spacing:-.01em}
   .mtgMain [data-meeting-tab="series"]{display:none}
 }
+
+/* v74: grupe serija */
+@media (min-width:1024px){
+  .mtgGroup{margin:4px 0 2px}
+  .mtgGroup>summary{display:flex;justify-content:space-between;align-items:baseline;gap:8px;cursor:pointer;padding:7px 10px;border-radius:9px;font-size:13px;font-weight:800;color:#3b4540;list-style:none}
+  .mtgGroup>summary::-webkit-details-marker{display:none}
+  .mtgGroup>summary:before{content:"▸";margin-right:6px;color:var(--mute);font-size:11px}
+  .mtgGroup[open]>summary:before{content:"▾"}
+  .mtgGroup>summary span{flex:1}
+  .mtgGroup>summary small{font-weight:600;color:var(--mute);font-size:11.5px}
+  .mtgGroup>summary:hover{background:#f6f8f7}
+  .mtgGroup .mtgSer{padding-left:24px}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -761,7 +774,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v73 · 27.11.2026.";
+const APP_VERSION="v74 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -922,6 +935,12 @@ function activeActions(){return S.items.filter(x=>x.Tip==="Akcija"&&x.Status!=="
 function legacyProjects(){return S.items.filter(x=>x.Tip==="Projekat"&&x.Status!=="Završen")}
 function projectSeries(){return (S.meetingSeries||[]).filter(s=>s.Tip==="Projektna"&&s.Status!=="Završen")}
 function recurringSeries(){return (S.meetingSeries||[]).filter(s=>s.Tip!=="Projektna")}
+// Grupa serije: izričito upisana, inače prefiks naziva ispred " – " (npr. "KF – usklađenost" → "KF").
+function seriesPrefix(s){const m=String(s?.Naziv||"").match(/^(.{1,40}?)\s+[–—-]\s+(\S.*)$/);return m?{group:m[1].trim(),rest:m[2].trim()}:null}
+function seriesGroup(s){if(s&&typeof s.Grupa==="string"&&s.Grupa.trim())return s.Grupa.trim();return seriesPrefix(s)?.group||""}
+function seriesShortName(s){const g=seriesGroup(s),pf=seriesPrefix(s);return pf&&pf.group===g?pf.rest:(s?.Naziv||"")}
+function seriesGroupsOf(list){const map=new Map();list.forEach(z=>{const g=seriesGroup(z);if(!map.has(g))map.set(g,[]);map.get(g).push(z)});const keys=[...map.keys()].sort((a,b)=>(a===""?-1:b===""?1:a.localeCompare(b)));return keys.map(k=>({group:k,items:map.get(k).sort((a,b)=>seriesShortName(a).localeCompare(seriesShortName(b)))}))}
+function seriesOptionsHTML(list,selectedId){return seriesGroupsOf(list).map(g=>{const opts=g.items.map(z=>`<option value="${z.ID}" ${Number(selectedId)===Number(z.ID)?"selected":""}>${esc(g.group?seriesShortName(z):z.Naziv)}</option>`).join("");return g.group?`<optgroup label="${esc(g.group)}">${opts}</optgroup>`:opts}).join("")}
 function projectById(id){const p=seriesById(id);return p&&p.Tip==="Projektna"?p:null}
 function projectOpenActions(id){return activeActions().filter(x=>Number(x.ProjekatID)===Number(id))}
 function projectTopics(id){const p=projectById(id);return S.items.filter(n=>n.Tip==="Beleška"&&n.Status!=="Arhivirana"&&(Number(n.PovezaniProjekatID)===Number(id)||Number(n.ProjekatID)===Number(id)||(p&&Number(p.AgendaIzvorID)===Number(n.ID))))}
@@ -1340,16 +1359,25 @@ function vSastanci(onlyResults=false){
  const sItem=(key,label,sub,count)=>`<button class="mtgSer${String(selSeries)===String(key)?" on":""}" data-mtg-series="${key}"><span class="mtgSerText"><span class="mtgSerName">${label}</span>${sub?`<small>${sub}</small>`:""}</span>${count?`<span class="countBadge" title="Otvorene akcije">${count}</span>`:""}</button>`;
  const act=recurringSeries().filter(z=>z.Status!=="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
  const fin=recurringSeries().filter(z=>z.Status==="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
- const serItem=z=>{const nx=nextOf(z.ID),open=seriesOpenActions(z.ID).length;return sItem(z.ID,esc(z.Naziv),nx?`sljedeći ${esc(fmtDate(nx.Datum))}`:"nema zakazanog",open)};
+ const serItem=(z,short)=>{const nx=nextOf(z.ID),open=seriesOpenActions(z.ID).length;return sItem(z.ID,esc(short?seriesShortName(z):z.Naziv),nx?`sljedeći ${esc(fmtDate(nx.Datum))}`:"nema zakazanog",open)};
+ let closedGroups=[];try{closedGroups=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}
+ const groupedHTML=seriesGroupsOf(act).map(g=>{
+  if(!g.group)return g.items.map(z=>serItem(z,false)).join("");
+  const hasSel=g.items.some(z=>String(z.ID)===String(selSeries));
+  const open=hasSel||!closedGroups.includes(g.group);
+  const openCount=g.items.reduce((n,z)=>n+seriesOpenActions(z.ID).length,0);
+  return `<details class="mtgGroup" data-mtg-group="${esc(g.group)}" ${open?"open":""}><summary><span>${esc(g.group)}</span><small>${g.items.length}${openCount?` · ${openCount} otv.`:""}</small></summary>${g.items.map(z=>serItem(z,true)).join("")}</details>`;
+ }).join("");
  const asideHTML=`<div class="mtgSerHead">Serije</div>
    ${sItem("all","Svi sastanci","",0)}
-   ${act.map(serItem).join("")||`<div class="sm mute" style="padding:8px 10px">Još nema serija.</div>`}
+   ${groupedHTML||`<div class="sm mute" style="padding:8px 10px">Još nema serija.</div>`}
    ${sItem("adhoc","Ad hoc sastanci","bez serije",0)}
    <button class="btn mtgSerNew" id="newSeriesSide">+ Nova serija</button>
-   ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(serItem).join("")}</details>`:""}`;
+   ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(z=>serItem(z,false)).join("")}</details>`:""}`;
  const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(selSer.Naziv)}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
  $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgLayout"><aside class="mtgSeries">${asideHTML}</aside><div class="mtgMain">${serHeadHTML}${mainHTML}</div></div>`:mainHTML);
  $("#view").querySelectorAll("[data-mtg-series]").forEach(b=>b.onclick=()=>{meetingsView.series=b.dataset.mtgSeries;meetingsView.search="";vSastanci()});
+ $("#view").querySelectorAll("[data-mtg-group]").forEach(d=>d.addEventListener("toggle",()=>{const g=d.dataset.mtgGroup;let c=[];try{c=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}c=c.filter(x=>x!==g);if(!d.open)c.push(g);try{localStorage.setItem("obaveze_laptop_closed_groups",JSON.stringify(c))}catch(e){}}));
  if($("#newSeriesSide"))$("#newSeriesSide").onclick=()=>editSeries(null,false);
  if($("#mtgSerDetail"))$("#mtgSerDetail").onclick=()=>seriesDialog(selSer.ID,{fromMeetingsTab:true});
  $("#newMeetingMain").onclick=()=>selSer&&selSer.Status!=="Završen"?editMeeting({ID:0,Datum:today(),Naslov:"",Napomena:"",SerijaID:selSer.ID,Sistem:selSer.Sistem||"Osiguranje",Ucesnici:(selSer.Ucesnici||[]).slice()},true):editMeeting();
@@ -1397,6 +1425,7 @@ function editSeries(s=null,selectOnSave=false,preset={}){
    <label class="f"><span class="sm mute">Cilj / opis projekta</span><textarea id="seriesGoal" placeholder="Šta treba postići?">${esc(s.Cilj||preset.Cilj||"")}</textarea></label>
    <label class="f"><span class="sm mute">Krajnji rok *</span><input type="date" id="seriesDue" value="${esc(s.Rok||preset.Rok||"")}"></label>
   </div>
+  ${isProjectForm?"":`<label class="f"><span class="sm mute">Grupa (opciono)</span><input id="seriesGroup" list="seriesGroupList" value="${esc(s.Grupa||"")}" placeholder="${esc(seriesPrefix({Naziv:s.Naziv||preset.Naziv||""})?.group?`Prazno = ${seriesPrefix({Naziv:s.Naziv||preset.Naziv||""}).group} (iz naziva)`:"npr. Procesi, Ključne funkcije")}"><datalist id="seriesGroupList">${[...new Set(recurringSeries().map(seriesGroup).filter(Boolean))].sort().map(g=>`<option value="${esc(g)}"></option>`).join("")}</datalist><span class="sm mute" style="display:block;margin-top:4px">Ako naziv počinje sa „Grupa – …", serija se grupiše sama.</span></label>`}
   <label class="f"><span class="sm mute">Podrazumijevani sistem</span><select id="seriesSystem">${["Osiguranje","Tehnički","Zajedničko"].map(v=>`<option value="${v}" ${(s.Sistem||"Osiguranje")===v?"selected":""}>${v}</option>`).join("")}</select></label>
   <label class="f" style="${isProjectForm?"display:none":""}"><span class="sm mute">Podrazumijevani učesnici</span><textarea id="seriesParticipants" placeholder="Jedan po redu ili odvojeni zarezom">${esc((s.Ucesnici||[]).join("\n"))}</textarea></label>
   <div class="btnrow"><button class="btn pri grow" id="seriesSave">Sačuvaj</button><button class="btn grow" id="seriesCancel">Otkaži</button></div>`,
@@ -1409,7 +1438,7 @@ function editSeries(s=null,selectOnSave=false,preset={}){
   const tip=$("#seriesType").value||"Redovna",due=$("#seriesDue")?.value||"";
   if(tip==="Projektna"&&!due){alert("Unesi krajnji rok projekta.");return}
   if(isNew){s.ID=++S.lastSeriesId;S.meetingSeries.push(s)}
-  s.Naziv=name;s.Tip=tip;s.Sistem=$("#seriesSystem").value||"Osiguranje";s.Ucesnici=parseParticipants($("#seriesParticipants").value);s.Status=s.Status==="Završen"?"Završen":"Aktivan";
+  s.Naziv=name;s.Tip=tip;if($("#seriesGroup"))s.Grupa=$("#seriesGroup").value.trim();s.Sistem=$("#seriesSystem").value||"Osiguranje";s.Ucesnici=parseParticipants($("#seriesParticipants").value);s.Status=s.Status==="Završen"?"Završen":"Aktivan";
   if(tip==="Projektna"){s.Cilj=$("#seriesGoal").value.trim();s.Rok=due}else{s.Cilj=s.Cilj||"";s.Rok=s.Rok||""}
   if(s.AgendaIzvorID){const source=S.items.find(n=>Number(n.ID)===Number(s.AgendaIzvorID));if(source){source.PovezaniProjekatID=s.ID;}}
   save();norm();render();
@@ -2190,7 +2219,7 @@ function editMeeting(m=null,forceNew=false,options={}){
  const initialSystem=meetingSystem(m);
  navOpen(`<h2>${isNew?"Novi":"Uredi"} sastanak</h2>
   <label class="f"><span class="sm mute">Datum *</span><input type="date" id="kmDate" value="${esc(m.Datum||today())}"></label>
-  <label class="f"><span class="sm mute">Serija</span><select id="kmSeries"><option value="">Bez serije — ad hoc</option>${series.map(s=>`<option value="${s.ID}" ${Number(m.SerijaID)===Number(s.ID)?"selected":""}>${esc(s.Naziv)}${s.Tip==="Projektna"?" · Projekat":""}</option>`).join("")}</select></label>
+  <label class="f"><span class="sm mute">Serija</span><select id="kmSeries"><option value="">Bez serije — ad hoc</option>${seriesOptionsHTML(series,m.SerijaID)}</select></label>
   <div class="btnrow" style="margin-top:6px"><button class="btn grow" id="kmNewSeries">+ Nova serija</button><button class="btn grow" id="kmManageSeries">Uredi serije</button></div>
   <label class="f" id="kmTitleWrap"><span class="sm mute">Naslov *</span><input id="kmTitle" value="${esc(m.Naslov||"")}" placeholder="Naziv ad hoc sastanka"></label>
   <label class="f"><span class="sm mute">Sistem</span><select id="kmSystem">${["Osiguranje","Tehnički","Zajedničko"].map(v=>`<option value="${v}" ${initialSystem===v?"selected":""}>${v}</option>`).join("")}</select></label>
@@ -2205,7 +2234,7 @@ function editMeeting(m=null,forceNew=false,options={}){
      const sel=$("#kmSeries");
      if(![...sel.options].some(o=>o.value===String(result.id))){
       const fresh=recurringSeries().filter(s=>s.Status!=="Završen"||Number(s.ID)===Number(result.id)).slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
-      sel.innerHTML=`<option value="">Bez serije — ad hoc</option>`+fresh.map(s=>`<option value="${s.ID}">${esc(s.Naziv)}${s.Tip==="Projektna"?" · Projekat":""}</option>`).join("");
+      sel.innerHTML=`<option value="">Bez serije — ad hoc</option>`+seriesOptionsHTML(fresh,result.id);
      }
      sel.value=String(result.id);
      const ss=seriesById(result.id);
@@ -2588,7 +2617,7 @@ function editItem(x=null,type="Akcija",preset={}){
  <label class="f"><span class="sm mute">${x.Tip==="Projekat"?"Naziv projekta":x.Tip==="Beleška"?"Naslov":"Šta treba uraditi?"}</span><textarea id="eTask" class="${x.Tip==="Beleška"?"noteInput":""}" ${x.Tip==="Beleška"?`rows="2" placeholder="Kratka teza / naslov"`:""}>${esc(x.Tip==="Projekat"?(x.Projekat||x.Zadatak):x.Zadatak||"")}</textarea></label>
 ${x.Tip==="Beleška"?`<label class="f"><span class="sm mute">Tekst (opciono)</span><textarea id="eNoteText" class="noteInput" rows="8" placeholder="Detalji beleške">${esc(x.Tekst||"")}</textarea></label>`:""}
  ${x.Tip!=="Projekat"&&!x.KolegijumID?`<label class="f"><span class="sm mute">Oblast</span><select id="eArea"><option value="Poslovno" ${(x.Oblast||"Poslovno")==="Poslovno"?"selected":""}>Poslovno</option><option value="Privatno" ${x.Oblast==="Privatno"?"selected":""}>Privatno</option></select></label>`:""}
- ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row" id="eSeriesWrap" style="gap:8px;align-items:flex-start"><label class="f grow"><span class="sm mute">Serija sastanaka</span><select id="eSeries"><option value="">Nije vezano</option>${itemSeries.map(s=>`<option value="${s.ID}" ${Number(x.SerijaID)===Number(s.ID)?"selected":""}>${esc(s.Naziv)}</option>`).join("")}</select></label><label class="f grow"><span class="sm mute">Projekat</span><select id="eProject"><option value="">Nije vezano</option>${(S.meetingSeries||[]).filter(s=>s.Tip==="Projektna"&&(s.Status!=="Završen"||Number(s.ID)===Number(x.ProjekatID))).slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||"")).map(s=>`<option value="${s.ID}" ${Number(x.ProjekatID)===Number(s.ID)?"selected":""}>${esc(s.Naziv)}</option>`).join("")}</select></label></div>`:""}
+ ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row" id="eSeriesWrap" style="gap:8px;align-items:flex-start"><label class="f grow"><span class="sm mute">Serija sastanaka</span><select id="eSeries"><option value="">Nije vezano</option>${seriesOptionsHTML(itemSeries,x.SerijaID)}</select></label><label class="f grow"><span class="sm mute">Projekat</span><select id="eProject"><option value="">Nije vezano</option>${(S.meetingSeries||[]).filter(s=>s.Tip==="Projektna"&&(s.Status!=="Završen"||Number(s.ID)===Number(x.ProjekatID))).slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||"")).map(s=>`<option value="${s.ID}" ${Number(x.ProjekatID)===Number(s.ID)?"selected":""}>${esc(s.Naziv)}</option>`).join("")}</select></label></div>`:""}
  ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row"><label class="f grow"><span class="sm mute">Tip značaja</span><select id="eImportance"><option value="Operativno" ${(x.Znacaj||"Operativno")==="Operativno"?"selected":""}>Operativno</option><option value="Strateško" ${x.Znacaj==="Strateško"?"selected":""}>Strateško</option></select></label><label class="f grow"><span class="sm mute">Prioritet</span><select id="ePriority">${["Visok","Normalan","Nizak"].map(v=>`<option value="${v}" ${(x.Prioritet||"Normalan")===v?"selected":""}>${v}</option>`).join("")}</select></label></div>`:""}
 
  ${x.Tip==="Akcija"?`<div class="row"><label class="f grow"><span class="sm mute">Odgovoran *</span><input id="eOwner" value="${esc(x.Odgovoran||"Ivan")}" ${isNew?"":"readonly"}></label><label class="f grow"><span class="sm mute">Rok *</span><input type="date" id="eDue" value="${esc(x.Rok||"")}" ${isNew?"":"readonly"}></label></div>${!isNew?`<div class="sm mute" style="margin-top:-4px">Odgovorni i rok se mijenjaju iz detalja akcije, uz čuvanje istorije.</div>`:""}`:""}
@@ -3486,7 +3515,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-73").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-74").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
