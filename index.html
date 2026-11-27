@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-71"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-71"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-72"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-72"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -727,6 +727,11 @@ body.liveMode #view{max-width:none!important}
 @media(max-width:1180px){.liveBody{grid-template-columns:240px minmax(0,1fr)}.liveMinutes{display:none}}
 @media(max-width:760px){.liveBody{grid-template-columns:1fr}.liveAgenda{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.liveMain{padding:16px}}
 @media (min-width:1024px){.meetingTopActions #meetingLive{margin-top:0!important;width:auto!important;flex:1}}
+
+/* v72: nacrti */
+.isDraft{border-color:var(--amber)!important;background:var(--amber-soft)!important}
+.draftNote{font-size:12px;color:#8a5a0c;margin-top:5px}
+.ltDraft{color:#8a5a0c;font-style:normal;font-weight:700}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -737,7 +742,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v71 · 27.11.2026.";
+const APP_VERSION="v72 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -900,7 +905,7 @@ function projectSeries(){return (S.meetingSeries||[]).filter(s=>s.Tip==="Projekt
 function recurringSeries(){return (S.meetingSeries||[]).filter(s=>s.Tip!=="Projektna")}
 function projectById(id){const p=seriesById(id);return p&&p.Tip==="Projektna"?p:null}
 function projectOpenActions(id){return activeActions().filter(x=>Number(x.ProjekatID)===Number(id))}
-function projectTopics(id){const p=projectById(id);return S.items.filter(n=>n.Tip==="Beleška"&&n.AgendaStavka===true&&n.Status!=="Arhivirana"&&(Number(n.PovezaniProjekatID)===Number(id)||(p&&Number(p.AgendaIzvorID)===Number(n.ID))))}
+function projectTopics(id){const p=projectById(id);return S.items.filter(n=>n.Tip==="Beleška"&&n.Status!=="Arhivirana"&&(Number(n.PovezaniProjekatID)===Number(id)||Number(n.ProjekatID)===Number(id)||(p&&Number(p.AgendaIzvorID)===Number(n.ID))))}
 function notes(){return S.items.filter(x=>x.Tip==="Beleška")}
 function realNotes(){return notes().filter(n=>n.AgendaStavka!==true&&n.ZaSledeciSastanak!==true)}
 function projectActions(p){
@@ -1365,7 +1370,7 @@ function editSeries(s=null,selectOnSave=false,preset={}){
   if(isNew){s.ID=++S.lastSeriesId;S.meetingSeries.push(s)}
   s.Naziv=name;s.Tip=tip;s.Sistem=$("#seriesSystem").value||"Osiguranje";s.Ucesnici=parseParticipants($("#seriesParticipants").value);s.Status=s.Status==="Završen"?"Završen":"Aktivan";
   if(tip==="Projektna"){s.Cilj=$("#seriesGoal").value.trim();s.Rok=due}else{s.Cilj=s.Cilj||"";s.Rok=s.Rok||""}
-  if(s.AgendaIzvorID){const source=S.items.find(n=>Number(n.ID)===Number(s.AgendaIzvorID));if(source){source.PovezaniProjekatID=s.ID;source.Obradjeno=true;}}
+  if(s.AgendaIzvorID){const source=S.items.find(n=>Number(n.ID)===Number(s.AgendaIzvorID));if(source){source.PovezaniProjekatID=s.ID;}}
   save();norm();render();
   if(s.AgendaIzvorID){
    const sourceId=Number(s.AgendaIzvorID);
@@ -1392,7 +1397,7 @@ function projectDetailDialog(id){
   <div class="btnrow" style="margin-top:12px">${!finished?`<button class="btn pri grow" id="pdAction">+ Akcija</button>`:""}<button class="btn grow" id="pdEdit">Uredi</button>${finished?`<button class="btn grow" id="pdReopen">Ponovo otvori</button>`:`<button class="btn grow" id="pdFinish">Završi projekat</button>`}</div>
   <div class="sectionHead" style="margin-top:18px"><h2>Otvorene akcije</h2><span class="countBadge">${open.length}</span></div>
   ${group("Kasni",late)}${group("Danas",todayA)}${group("Dospijeva u narednih 7 dana",week)}${group("Kasnije",later)}${!open.length?`<div class="empty">Nema otvorenih akcija na ovom projektu.</div>`:""}
-  ${topics.length?`<div class="sectionHead"><h2>Teme sa sastanaka</h2><span class="countBadge">${topics.length}</span></div><div class="list">${topics.map(n=>{const mm=meetingById(n.KolegijumID);return `<div class="card tight" data-project-topic="${n.ID}"><b>${esc(n.Zadatak)}</b><div class="sm mute" style="margin-top:4px">${mm?meetingLabel(mm):"Bez sastanka"}</div></div>`}).join("")}</div>`:""}`,
+  ${topics.length?`<div class="sectionHead"><h2>Teme i beleške</h2><span class="countBadge">${topics.length}</span></div><div class="list">${topics.map(n=>{const mm=meetingById(n.KolegijumID);return `<div class="card tight" data-project-topic="${n.ID}"><b>${esc(n.Zadatak)}</b><div class="sm mute" style="margin-top:4px">${n.AgendaStavka?"Tema":"Beleška"} · ${mm?meetingLabel(mm):"bez sastanka"}</div></div>`}).join("")}</div>`:""}`,
   `project:${id}`,{refresh:()=>projectDetailDialog(id)});
  $("#pdc").onclick=navBack;
  $("#pdEdit").onclick=()=>editSeries(p,false);
@@ -2091,8 +2096,12 @@ function agendaRelatedItems(noteId){
  });
  return items.concat(projectSeries);
 }
+function agendaOutcomeItems(n){
+ // Projekat samo povezan sa temom (npr. u pripremi) nije ishod; ishod je projekat nastao iz teme.
+ return agendaRelatedItems(n.ID).filter(y=>!(y._projectSeries&&Number(projectById(y.ID)?.AgendaIzvorID)!==Number(n.ID)));
+}
 function agendaProcessed(n){
- return !!(n.Obradjeno||(n.IzDiskusije||"").trim()||(n.Zakljucak||"").trim()||agendaRelatedItems(n.ID).length);
+ return !!(n.Obradjeno||(n.IzDiskusije||"").trim()||(n.Zakljucak||"").trim()||agendaOutcomeItems(n).length);
 }
 function remainingMeetingNotes(meetingId){
  return S.items.filter(x=>
@@ -2188,7 +2197,7 @@ function editMeeting(m=null,forceNew=false,options={}){
    S.meetings.push(target);
    if(carrySourceId&&$("#carryAgenda")?.checked){
     carryNotes.forEach(n=>{
-     S.items.push({ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:n.Zadatak,Oblast:"Poslovno",KolegijumID:target.ID,SerijaID:target.SerijaID||null,Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",AgendaStavka:true,Zakljucak:"",IzDiskusije:"",Obradjeno:false,PrenesiDalje:false,PrenesenoIzSastankaID:carrySourceId,ZaSledeciSastanak:false});
+     S.items.push({ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:n.Zadatak,Oblast:"Poslovno",KolegijumID:target.ID,SerijaID:target.SerijaID||null,Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",AgendaStavka:true,Zakljucak:"",Zakljucci:[],IzDiskusije:"",Obradjeno:false,PrenesiDalje:false,PrenesenoIzSastankaID:carrySourceId,ZaSledeciSastanak:false,PovezaniProjekatID:Number(n.PovezaniProjekatID)||Number((S.meetingSeries||[]).find(z=>z.Tip==="Projektna"&&Number(z.AgendaIzvorID)===Number(n.ID))?.ID)||null,ProjekatID:Number(n.ProjekatID)||null});
      n.PrenesenoNaSastanakID=target.ID;
     });
    }
@@ -2325,7 +2334,7 @@ function navFrameValid(frame){
  if(kind==="series")return !!seriesById(id);
  if(kind==="item")return !!S.items.find(x=>Number(x.ID)===id);
  if(kind==="note")return !!S.items.find(x=>Number(x.ID)===id&&x.Tip==="Beleška"&&x.Status!=="Arhivirana");
- if(kind==="project")return !!S.items.find(x=>Number(x.ID)===id&&x.Tip==="Projekat");
+ if(kind==="project")return !!projectById(id)||!!S.items.find(x=>Number(x.ID)===id&&x.Tip==="Projekat");
  if(kind==="deadline"||kind==="owner"||kind==="agendaOutcome")return !!S.items.find(x=>Number(x.ID)===id);
  if(kind==="meetingForm")return raw==="new"||!!meetingById(id);
  if(kind==="itemForm")return raw==="new"||!!S.items.find(x=>Number(x.ID)===id);
@@ -2742,7 +2751,7 @@ function agendaProjectDialog(noteId){
   ${n.PovezaniProjekatID?`<button class="btn" style="width:100%;margin-top:8px" id="apClear">Ukloni vezu sa projektom</button>`:""}`,
   `agendaProject:${noteId}`,{dedupe:false});
  $("#apClose").onclick=navBack;
- $("#dlgBody").querySelectorAll("[data-agenda-project]").forEach(b=>b.onclick=()=>{n.PovezaniProjekatID=Number(b.dataset.agendaProject);n.Obradjeno=true;save();norm();render();navBack({type:"changed",kind:"Agenda",id:n.ID})});
+ $("#dlgBody").querySelectorAll("[data-agenda-project]").forEach(b=>b.onclick=()=>{n.PovezaniProjekatID=Number(b.dataset.agendaProject);save();norm();render();navBack({type:"changed",kind:"Agenda",id:n.ID})});
  $("#apNew").onclick=()=>editSeries(null,false,{Tip:"Projektna",Naziv:"",AgendaIzvorID:n.ID,KolegijumID:n.KolegijumID||null,IzvorSerijaID:n.SerijaID||meetingById(n.KolegijumID)?.SerijaID||null});
  if($("#apClear"))$("#apClear").onclick=()=>{n.PovezaniProjekatID=null;save();norm();render();navBack({type:"changed",kind:"Agenda",id:n.ID})};
 }
@@ -2794,7 +2803,7 @@ function noteDialog(id){
   S.items.forEach(a=>{if(a.Tip==="Akcija"&&a.ZakljucakID&&Number(a.AgendaIzvorID)===Number(n.ID)&&!ids.has(Number(a.ZakljucakID)))a.ZakljucakID=null});
   n.Zakljucci=list;n.Zakljucak=list.map(c=>c.Tekst).join("\n");
  };
- const saveTopic=()=>{n.Znacaj=$("#topicImportance")?.value||n.Znacaj||"Operativno";n.Prioritet=$("#topicPriority")?.value||n.Prioritet||"Normalan";readConclusions();n.IzDiskusije=$("#topicDiscussion")?.value.trim()||"";n.PrenesiDalje=transferred?n.PrenesiDalje:$("#topicCarry").checked;const hasOutcome=!!n.Zakljucak||!!n.IzDiskusije||agendaRelatedItems(n.ID).length>0;n.Obradjeno=hasOutcome?false:$("#topicProcessed").checked;delete n.PrenosOdluka;save();norm();render()};
+ const saveTopic=()=>{n.Znacaj=$("#topicImportance")?.value||n.Znacaj||"Operativno";n.Prioritet=$("#topicPriority")?.value||n.Prioritet||"Normalan";readConclusions();n.IzDiskusije=$("#topicDiscussion")?.value.trim()||"";n.PrenesiDalje=transferred?n.PrenesiDalje:$("#topicCarry").checked;const hasOutcome=!!n.Zakljucak||!!n.IzDiskusije||agendaOutcomeItems(n).length>0;n.Obradjeno=hasOutcome?false:$("#topicProcessed").checked;delete n.PrenosOdluka;save();norm();render()};
  $("#noteClose").onclick=()=>{saveTopic();navBack({type:"changed",kind:"Beleška",id:n.ID})};$("#topicSave").onclick=()=>{saveTopic();navBack({type:"changed",kind:"Beleška",id:n.ID})};
  $("#topicAction").onclick=()=>{saveTopic();editItem(null,"Akcija",{Zadatak:"",Oblast:"Poslovno",KolegijumID:n.KolegijumID||null,SerijaID:n.SerijaID||null,ProjekatID:n.PovezaniProjekatID||null,_fromNoteId:n.ID,AgendaIzvorID:n.ID})};
  $("#topicProject").onclick=()=>{saveTopic();agendaProjectDialog(n.ID)};$("#noteShare").onclick=()=>{saveTopic();shareText("Tema sastanka",itemShareText(n))};
@@ -3235,7 +3244,17 @@ function resetData(){
 }
 
 /* ===== v71: Sastanak uživo ===== */
-const liveView={meetingId:null,topicId:null,due:"7",dueDate:""};
+const liveView={meetingId:null,topicId:null,due:"7",dueDate:"",drafts:{}};
+const DRAFT_KEY="obaveze_laptop_drafts";
+try{liveView.drafts=JSON.parse(localStorage.getItem(DRAFT_KEY)||"{}")||{}}catch(e){liveView.drafts={}}
+function liveDraft(id){return liveView.drafts[id]||(liveView.drafts[id]={concl:"",what:"",who:"",cid:""})}
+function liveDraftHas(id){const d=liveView.drafts[id];return !!(d&&(d.concl.trim()||d.what.trim()))}
+function liveSaveDrafts(){Object.keys(liveView.drafts).forEach(k=>{const d=liveView.drafts[k];if(!d.concl.trim()&&!d.what.trim()&&!d.who.trim())delete liveView.drafts[k]});try{localStorage.setItem(DRAFT_KEY,JSON.stringify(liveView.drafts))}catch(e){}}
+function liveDraftTopics(m){return liveTopics(m).filter(t=>liveDraftHas(t.ID))}
+function liveConfirmDrafts(m,action){
+ const dt=liveDraftTopics(m);if(!dt.length)return true;
+ return confirm(`Nedodat unos (nacrt) postoji u ${dt.length===1?"temi":"temama"}: ${dt.map(t=>"„"+t.Zadatak+"“").join(", ")}.\n\nNacrt nije dio zapisnika dok ga ne potvrdiš sa Enter. Ostaje sačuvan i vratiće se kad otvoriš temu.\n\n${action} ipak?`);
+}
 let liveSaveTimer=null;
 function liveSaveSoon(){clearTimeout(liveSaveTimer);liveSaveTimer=setTimeout(()=>{liveSaveTimer=null;save();liveRefreshSide()},350)}
 function liveFlush(){if(liveSaveTimer){clearTimeout(liveSaveTimer);liveSaveTimer=null;save()}}
@@ -3254,7 +3273,7 @@ function liveDueValue(m){
  return liveView.dueDate||"";
 }
 function startLive(id){closeDlg();liveView.meetingId=id;liveView.topicId=null;route="uzivo";render();window.scrollTo(0,0)}
-function exitLive(){liveFlush();const id=liveView.meetingId;liveView.meetingId=null;route="sastanci";render();if(id&&meetingById(id))meetingDialog(id)}
+function exitLive(){const mm=meetingById(liveView.meetingId);if(mm&&!liveConfirmDrafts(mm,"Izaći iz prikaza uživo"))return;liveFlush();const id=liveView.meetingId;liveView.meetingId=null;route="sastanci";render();if(id&&meetingById(id))meetingDialog(id)}
 function liveTopicStatus(t,isCur){
  if(t.PrenesenoNaSastanakID)return "Preneseno";
  if(isCur)return "Sada se obrađuje";
@@ -3277,7 +3296,7 @@ function vUzivo(){
  </div>`;
  $("#liveBack").onclick=exitLive;
  $("#liveMinutesBtn").onclick=()=>{liveFlush();meetingMinutesDialog(m.ID)};
- if($("#liveFinish"))$("#liveFinish").onclick=()=>{liveFlush();finishMeetingDialog(m.ID)};
+ if($("#liveFinish"))$("#liveFinish").onclick=()=>{if(!liveConfirmDrafts(m,"Završiti sastanak"))return;liveFlush();finishMeetingDialog(m.ID)};
  renderLiveAgenda();renderLiveMain();renderLiveMinutes();
 }
 function liveRefreshSide(){if(route!=="uzivo")return;renderLiveAgenda();renderLiveMinutes()}
@@ -3291,7 +3310,7 @@ function renderLiveAgenda(){
  const pct=topics.length?Math.round(done/topics.length*100):0;
  box.innerHTML=`<div class="laHead"><span>Agenda</span><span>${done} od ${topics.length} obrađeno</span></div>
   <div class="laProg"><i style="width:${pct}%"></i></div>
-  ${topics.map((t,i)=>{const cur=t.ID===liveView.topicId,cls=t.PrenesenoNaSastanakID?"tr":agendaProcessed(t)?"done":"open";return `<button class="liveTopic ${cls}${cur?" on":""}" data-live-topic="${t.ID}"><span class="ltNum">${i+1}</span><span class="ltText">${esc(t.Zadatak)}<small>${esc(liveTopicStatus(t,cur))}</small></span></button>`}).join("")||`<div class="sm mute" style="padding:8px 2px">Agenda je prazna.</div>`}
+  ${topics.map((t,i)=>{const cur=t.ID===liveView.topicId,cls=t.PrenesenoNaSastanakID?"tr":agendaProcessed(t)?"done":"open";return `<button class="liveTopic ${cls}${cur?" on":""}" data-live-topic="${t.ID}"><span class="ltNum">${i+1}</span><span class="ltText">${esc(t.Zadatak)}<small>${esc(liveTopicStatus(t,cur))}${liveDraftHas(t.ID)?` <em class="ltDraft">· nacrt</em>`:""}</small></span></button>`}).join("")||`<div class="sm mute" style="padding:8px 2px">Agenda je prazna.</div>`}
   ${m.Status!=="Završen"?`<input id="liveNewTopic" class="liveNewTopic" placeholder="+ Nova tema — Enter">`:""}`;
  box.querySelectorAll("[data-live-topic]").forEach(b=>b.onclick=()=>liveSelectTopic(Number(b.dataset.liveTopic)));
  const nt=$("#liveNewTopic");
@@ -3305,7 +3324,7 @@ function renderLiveMain(){
  const m=meetingById(liveView.meetingId),box=$("#liveMain");if(!m||!box)return;
  const topics=liveTopics(m),n=topics.find(t=>t.ID===liveView.topicId);
  if(!n){box.innerHTML=`<div class="empty" style="margin-top:60px">Agenda je prazna. Dodaj prvu temu lijevo i pritisni Enter.</div>`;return}
- const idx=topics.indexOf(n),concl=n.Zakljucci||[];
+ const idx=topics.indexOf(n),concl=n.Zakljucci||[],dr=liveDraft(n.ID);
  const acts=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.AgendaIzvorID)===Number(n.ID));
  const actRow=a=>`<div class="lcAct" data-live-item="${a.ID}">↳ ${esc(a.Zadatak)} <span>${esc([a.Odgovoran,a.Rok?fmtDate(a.Rok):"",a.Status==="Završeno"?"završeno":""].filter(Boolean).join(" · "))}</span></div>`;
  const loose=acts.filter(a=>!a.ZakljucakID||!concl.some(c=>Number(c.ID)===Number(a.ZakljucakID)));
@@ -3319,16 +3338,17 @@ function renderLiveMain(){
   <section class="lmCard lmConcl">
    <div class="lmLabel"><span>Zaključci${concl.length?` · ${concl.length}`:""}</span><span>Enter dodaje sljedeći</span></div>
    ${concl.map((c,k)=>`<div class="lcRow"><b class="lcNo">${k+1}</b><textarea class="lcText" rows="1" data-lc-text="${c.ID}" ${locked?"readonly":""}>${esc(c.Tekst)}</textarea>${locked?"":`<button type="button" class="lcDel" data-lc-del="${c.ID}" aria-label="Ukloni zaključak ${k+1}">Ukloni</button>`}${acts.filter(a=>Number(a.ZakljucakID)===Number(c.ID)).map(actRow).join("")}</div>`).join("")}
-   ${locked?"":`<input id="liveNewConcl" class="lcNew" placeholder="${concl.length+1}. ${concl.length?"Sljedeći zaključak…":"Šta je odlučeno? — Enter"}">`}
+   ${locked?"":`<input id="liveNewConcl" class="lcNew${dr.concl.trim()?" isDraft":""}" placeholder="${concl.length+1}. ${concl.length?"Sljedeći zaključak…":"Šta je odlučeno? — Enter"}" value="${esc(dr.concl)}"><div class="draftNote" id="conclDraftNote" ${dr.concl.trim()?"":"hidden"}>Nacrt — nije dodat u zapisnik dok ne pritisneš Enter</div>`}
   </section>
   <details class="lmCard lmDisc" ${n.IzDiskusije?"open":""}><summary>+ Iz diskusije <span>(kontekst za cijelu temu, nije zaključak)</span></summary><textarea id="liveDisc" ${locked?"readonly":""}>${esc(n.IzDiskusije||"")}</textarea></details>
   ${locked?"":`<section class="lmCard">
    <div class="lmLabel"><span>Nova akcija</span><span>Veza sa zaključkom nije obavezna · rok jeste</span></div>
    <div class="laRow">
-    <input id="laWhat" class="laWhat" placeholder="Šta treba uraditi… (Enter dodaje)">
-    <input id="laWho" class="laWho" list="livePeople" placeholder="Ko">
-    <select id="laConcl" class="laConcl" aria-label="Zaključak"><option value="">— tema</option>${concl.map((c,k)=>`<option value="${c.ID}">Zaključak ${k+1}</option>`).join("")}</select>
+    <input id="laWhat" class="laWhat${dr.what.trim()?" isDraft":""}" placeholder="Šta treba uraditi… (Enter dodaje)" value="${esc(dr.what)}">
+    <input id="laWho" class="laWho" list="livePeople" placeholder="Ko" value="${esc(dr.who)}">
+    <select id="laConcl" class="laConcl" aria-label="Zaključak"><option value="">— tema</option>${concl.map((c,k)=>`<option value="${c.ID}" ${String(dr.cid)===String(c.ID)?"selected":""}>Zaključak ${k+1}</option>`).join("")}</select>
    </div>
+   <div class="draftNote" id="actDraftNote" ${dr.what.trim()?"":"hidden"}>Nacrt akcije — nije dodata dok ne pritisneš Enter ili „Dodaj akciju"</div>
    <div class="laRow laDueRow"><span class="sm mute">Rok</span>${dueBtn("today","Danas")}${dueBtn("tomorrow","Sjutra")}${dueBtn("7","7 dana")}${nextDate?dueBtn("next","Do sljedećeg sastanka"):""}<input type="date" id="laDate" class="laDate" value="${esc(dueVal)}" aria-label="Datum roka"><button class="btn pri" id="laAdd">Dodaj akciju</button></div>
    <datalist id="livePeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>
    ${loose.length?`<div class="laLoose"><div class="sm mute">Akcije teme bez veze sa zaključkom</div>${loose.map(actRow).join("")}</div>`:""}
@@ -3337,7 +3357,7 @@ function renderLiveMain(){
    <label><input type="checkbox" id="liveCarry" ${n.PrenesiDalje?"checked":""} ${(n.PrenesenoNaSastanakID||locked)?"disabled":""}> ${n.PrenesenoNaSastanakID?"Tema je prenesena":"Prenesi temu na sljedeći sastanak"}</label>
    <label><input type="checkbox" id="liveProcessed" ${n.Obradjeno?"checked":""} ${locked?"disabled":""}> Obrađeno bez zaključka</label>
    <button class="btn" id="liveProject">${proj?`Projekat: ${esc(proj.Naziv)}`:"Poveži projekat"}</button>
-   <span class="lmHint">Čuva se automatski · Alt+↓ / Alt+↑ tema</span>
+   <span class="lmHint">Potvrđeno (Enter) se čuva odmah · nedodat unos ostaje kao nacrt teme · Alt+↓ / Alt+↑ tema</span>
   </div>`;
  const grow=t=>{t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"};
  box.querySelectorAll(".lcText").forEach(t=>{grow(t);
@@ -3346,10 +3366,18 @@ function renderLiveMain(){
   t.onblur=()=>{const c=concl.find(z=>Number(z.ID)===Number(t.dataset.lcText));if(c&&!t.value.trim()){n.Zakljucci=concl.filter(z=>z!==c);n.Zakljucak=n.Zakljucci.map(z=>z.Tekst).join("\n");S.items.forEach(a=>{if(a.Tip==="Akcija"&&Number(a.ZakljucakID)===Number(c.ID))a.ZakljucakID=null});liveFlush();save();renderLiveMain();liveRefreshSide()}};
  });
  const nc=$("#liveNewConcl");
+ const markDraft=(el,note,on)=>{if(el)el.classList.toggle("isDraft",on);const nn=$(note);if(nn)nn.hidden=!on};
+ const draftChanged=()=>{liveSaveDrafts();const wasOn=document.querySelector(`[data-live-topic="${n.ID}"] .ltDraft`);if(!!wasOn!==liveDraftHas(n.ID))renderLiveAgenda()};
+ if(nc)nc.oninput=()=>{dr.concl=nc.value;markDraft(nc,"#conclDraftNote",!!nc.value.trim());draftChanged()};
+ const lw=$("#laWhat"),lwho=$("#laWho"),lc=$("#laConcl");
+ if(lw)lw.addEventListener("input",()=>{dr.what=lw.value;markDraft(lw,"#actDraftNote",!!lw.value.trim());draftChanged()});
+ if(lwho)lwho.addEventListener("input",()=>{dr.who=lwho.value;liveSaveDrafts()});
+ if(lc)lc.addEventListener("change",()=>{dr.cid=lc.value;liveSaveDrafts()});
  if(nc)nc.onkeydown=e=>{
   if(e.key!=="Enter"||e.altKey)return;e.preventDefault();const v=nc.value.trim();
   if(!v){$("#laWhat")?.focus();return}
   n.Zakljucci=[...concl,{ID:++S.lastZakljucakId,Tekst:v}];n.Zakljucak=n.Zakljucci.map(z=>z.Tekst).join("\n");
+  dr.concl="";liveSaveDrafts();
   liveFlush();save();renderLiveMain();liveRefreshSide();setTimeout(()=>$("#liveNewConcl")?.focus(),0);
  };
  box.querySelectorAll("[data-lc-del]").forEach(b=>b.onclick=()=>{
@@ -3369,6 +3397,7 @@ function renderLiveMain(){
   if(!due){alert("Akcija mora imati rok.");$("#laDate").focus();return}
   const cid=Number($("#laConcl").value)||null;
   S.items.push({ID:++S.lastId,Tip:"Akcija",Zadatak:what,Odgovoran:who,Rok:due,Status:"Otvoreno",Znacaj:"Operativno",Prioritet:"Normalan",Oblast:"Poslovno",KolegijumID:m.ID,SerijaID:m.SerijaID||null,ProjekatID:n.PovezaniProjekatID||null,AgendaIzvorID:n.ID,ZakljucakID:cid,Sistem:meetingSystem(m),Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Projekat:"",ProjectID:null,RokIstorija:[],OdgovorniIstorija:[]});
+  dr.what="";dr.who="";dr.cid="";liveSaveDrafts();
   liveFlush();save();norm();renderLiveMain();liveRefreshSide();
   setTimeout(()=>{$("#laWhat")?.focus()},0);
  };
@@ -3384,7 +3413,7 @@ function renderLiveMain(){
 function renderLiveMinutes(){
  const m=meetingById(liveView.meetingId),box=$("#liveMinutesPane");if(!m||!box)return;
  const ser=m.SerijaID?seriesById(m.SerijaID):null,topics=liveTopics(m);
- box.innerHTML=`<div class="lmpHead"><span>Zapisnik uživo</span><button class="linkBtn" id="liveMinutesFull">Cijeli zapisnik ›</button></div>
+ box.innerHTML=`<div class="lmpHead"><span>Sažetak zapisnika</span><button class="linkBtn" id="liveMinutesFull">Puni zapisnik ›</button></div>
   <article class="lmpDoc">
    <div class="lmpBrand"><img src="./logo-grawe-2021.png" alt="GRAWE"><span><b>ZAPISNIK</b>${esc(ser?.Naziv||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</span></div>
    <div class="lmpMeta">Prisutni: ${esc(participantText(m.Ucesnici)||"—")}</div>
@@ -3398,7 +3427,7 @@ function renderLiveMinutes(){
      ${t.PrenesenoNaSastanakID?`<div class="lmpS">Preneseno na sljedeći termin</div>`:empty?`<div class="lmpS">${t.Obradjeno?"Razmotreno, bez posebnog zaključka.":t.PrenesiDalje?"Prenosi se na sljedeći sastanak.":"Još nije obrađeno"}</div>`:""}
     </div>`}).join("")}
   </article>
-  <p class="lmpNote">Zapisnik se puni iz zaključaka i akcija dok pišeš. Na kraju ostaje pregled i PDF.</p>`;
+  <p class="lmpNote">Sažetak prikazuje potvrđene zaključke i akcije. Puni zapisnik sadrži i „Iz diskusije", prisutne, uvod i napomenu — otvaraš ga dugmetom Zapisnik.</p>`;
  $("#liveMinutesFull").onclick=()=>{liveFlush();meetingMinutesDialog(m.ID)};
  box.querySelectorAll("[data-live-topic-min]").forEach(el=>el.onclick=()=>liveSelectTopic(Number(el.dataset.liveTopicMin)));
 }
@@ -3416,7 +3445,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-71").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-72").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
