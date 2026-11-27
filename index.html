@@ -1065,7 +1065,7 @@ h1,h2,h3,.lmLabel,.mtgSerTitle h2{font-family:"Segoe UI Variable Display","Segoe
 }
 label:has(#eImportance),label:has(#topicImportance),label:has(#crImportance){display:none!important}
 .filterGroup:has([data-importance-filter]),.filterGroup:has([data-note-importance]){display:none!important}
-.kpiStrip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.kpiStrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}
 .kpiTile{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;font-family:inherit;min-width:0}
 .kpiTile:hover{border-color:#bcd3c5}
 .kpiVal{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1}
@@ -1106,6 +1106,7 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 .wkRow .wkToMeet{opacity:0;pointer-events:none;color:var(--mute)!important;font-weight:500!important;transition:opacity .12s}
 .wkRow:hover .wkToMeet,.wkRow:focus-within .wkToMeet{opacity:1;pointer-events:auto}
 .wkRow .wkToMeet:hover{color:var(--green-deep)!important}
+.wkSrc{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:#cdd6d1;text-underline-offset:2px}.wkSrc:hover{color:var(--green-deep)}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -1118,7 +1119,7 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v103 · 27.11.2026.";
+const APP_VERSION="v104 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -4108,7 +4109,6 @@ function wkKpiHTML(st,d){
   ${tile("late",String(k.late.length),"Kasni",k.late.length?`prosječno ${k.avgLate} d`:"ništa ne kasni",k.late.length?"bad":"ok")}
   ${tile("stuck",String(k.stuck.length),"Zaglavljeno","preneseno ili pomjereno 2+ puta",k.stuck.length?"mid":"ok")}
   ${tile("deleg",dp===null?"—":dp+"%","Delegirano do roka",k.dBase?`${k.dOk} od ${k.dBase} · 8 nedjelja`:d.deleg.length?`${d.deleg.length} u toku — računa se kad dospiju`:"još nema podataka",band(dp,80,60))}
-  ${tile("mtg",mp===null?"—":mp+"%","Zadaci sa sastanaka",k.mBase?`${k.mOk} od ${k.mBase} do roka · 8 ned.`:a.openActs.length?`${a.openActs.length} u toku — računa se kad dospiju`:"još nema podataka",band(mp,80,60))}
  </section>${actBar}`;
 }
 function actTasksDialog(st){
@@ -4199,11 +4199,12 @@ function vNedjelja(){
  const st=weekView.start,d=wkData(st),cur=st===wkMonday(today());
  const closed=(S.weekLog||{})[st];
  const due=x=>{if(!x.Rok)return "";const k=daysTo(x.Rok);return k<0?`<span class="wkDue late">Kasni ${Math.abs(k)} d</span>`:k===0?`<span class="wkDue soon">Danas</span>`:`<span class="wkDue">${esc(wkShort(x.Rok))}</span>`};
- const meta=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null,p=x.ProjekatID?projectById(x.ProjekatID):null;return [m?meetingLabel(m):"",p?projectLabel(p):"",wkPinned(x,st,d.end)?(x.UNedjelji<st?`ostalo iz nedjelje ${wkLabel(x.UNedjelji)} · rok ${fmtDate(x.Rok)}`:`uzeto u ovu nedjelju · rok ${fmtDate(x.Rok)}`):"",x.PrenosBroj?`preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · ")};
- const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button>${wkPinned(x,st,d.end)?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
+ const src=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null;return m?`<button class="wkSrc" data-wk-src="${m.ID}" title="Otvori sastanak">sa sastanka: ${meetingLabel(m)}</button>`:""};
+ const meta=x=>{const p=x.ProjekatID?projectById(x.ProjekatID):null;return [p?projectLabel(p):"",wkPinned(x,st,d.end)?(x.UNedjelji<st?`ostalo iz nedjelje ${wkLabel(x.UNedjelji)} · rok ${fmtDate(x.Rok)}`:`uzeto u ovu nedjelju · rok ${fmtDate(x.Rok)}`):"",x.PrenosBroj?`preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · ")};
+ const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)||src(x)?`<small>${src(x)}${src(x)&&meta(x)?" · ":""}${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button>${wkPinned(x,st,d.end)?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
  const doneRowD=x=>`<div class="wkRow done" data-wk-item="${x.ID}"><span class="wkCheck on" aria-hidden="true">✓</span><span class="wkText"><b>${esc(x.Zadatak)}</b><small>${esc(x.Odgovoran||"")} · ${x.Otkazano?"otkazano":"završeno"} ${esc(wkShort(x.ZavrsenDatum))}</small></span></div>`;
  const doneRow=x=>`<div class="wkRow done" data-wk-item="${x.ID}"><span class="wkCheck on" aria-hidden="true">✓</span><span class="wkText"><b>${esc(x.Zadatak)}</b><small>${x.Otkazano?"otkazano":"završeno"} ${esc(wkShort(x.ZavrsenDatum))}</small></span></div>`;
- const delegRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno" title="${esc(x.Odgovoran||"")} je završio/la"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button><span class="wkWho">${esc(x.Odgovoran||"")}</span>${due(x)}</div>`;
+ const delegRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno" title="${esc(x.Odgovoran||"")} je završio/la"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)||src(x)?`<small>${src(x)}${src(x)&&meta(x)?" · ":""}${esc(meta(x))}</small>`:""}</span><button class="linkBtn wkToMeet" data-wk-actmeet="${x.ID}" title="Stavi na dnevni red sastanka">→ Sastanak</button><span class="wkWho">${esc(x.Odgovoran||"")}</span>${due(x)}</div>`;
  const people=[...new Set(S.people||[])].filter(p=>!isMe(p));
  const ser=recurringSeries().filter(s=>s.Status!=="Završen");
  const kinds=[["mine","Moje"],["deleg","Delegiraj"],["meet","Na sastanak"],["note","Beleška"]];
@@ -4278,6 +4279,7 @@ function vNedjelja(){
  $("#view").querySelectorAll("[data-wk-series]").forEach(b=>b.onclick=()=>seriesDialog(Number(b.dataset.wkSeries)));
  $("#view").querySelectorAll("[data-wk-toact]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=S.items.find(z=>z.ID===Number(b.dataset.wkToact));if(n)editItem(null,"Akcija",{Zadatak:n.Zadatak,Oblast:n.Oblast||"Poslovno",_fromNoteId:n.ID})});
  $("#view").querySelectorAll("[data-wk-tomeet]").forEach(b=>b.onclick=e=>{e.stopPropagation();noteToAgendaDialog(Number(b.dataset.wkTomeet))});
+ $("#view").querySelectorAll("[data-wk-src]").forEach(b=>b.onclick=e=>{e.stopPropagation();meetingDialog(Number(b.dataset.wkSrc))});
  $("#view").querySelectorAll("[data-wk-actmeet]").forEach(b=>b.onclick=e=>{e.stopPropagation();actionToMeeting(Number(b.dataset.wkActmeet))});
  $("#wkPick").onclick=()=>weekPickDialog(st);
  $("#view").querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>kpiDialog(b.dataset.kpi,st));
@@ -4438,7 +4440,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-103").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-104").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
