@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-70"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-70"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-71"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-71"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -643,6 +643,90 @@ nav button.on:after{
 .conclAction span{color:var(--mute);font-size:12px}
 .conclNew{margin-top:8px;border-style:dashed!important;background:#fafdfb!important}
 .proConcl{margin-bottom:2px}
+
+/* ===== v71: Sastanak uživo ===== */
+body.liveMode nav,body.liveMode .fab{display:none!important}
+body.liveMode .app{margin:0!important;padding:0!important;max-width:none!important}
+body.liveMode #view{max-width:none!important}
+.live{min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
+.liveHead{display:flex;align-items:center;gap:12px;padding:10px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;flex-wrap:wrap}
+.liveBack{border:0;background:none;font-weight:700;color:var(--mute);font-size:14px;padding:6px 4px}
+.liveTitle{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.liveTitle b{font-size:17px;letter-spacing:-.01em}.liveTitle span{font-size:12.5px;color:var(--mute)}
+.liveHead .btn{font-size:14px;padding:9px 14px}
+.liveBody{flex:1;display:grid;grid-template-columns:270px minmax(0,1fr) 360px;align-items:stretch}
+.liveAgenda,.liveMinutes{position:sticky;top:60px;align-self:start;height:calc(100vh - 60px);overflow:auto;box-sizing:border-box}
+.liveAgenda{padding:16px 14px;border-right:1px solid var(--line);background:#fbfcfb}
+.liveMinutes{padding:16px 18px;border-left:1px solid var(--line);background:#eef2ef}
+.liveMain{padding:20px 28px 60px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.laHead,.lmpHead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.laHead span:last-child{letter-spacing:0;text-transform:none;font-weight:600;font-size:12px}
+.laProg{height:4px;background:#e6ebe8;border-radius:4px;margin-bottom:12px}.laProg i{display:block;height:4px;background:var(--green);border-radius:4px}
+.liveTopic{width:100%;display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:9px 10px;margin-bottom:3px;font-size:14px}
+.liveTopic:hover{background:#fff;border-color:var(--line)}
+.liveTopic.on{background:#fff;border-color:#bcdcc9;box-shadow:var(--shadow-soft)}
+.ltNum{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--amber-soft);color:#8a5a0c}
+.liveTopic.done .ltNum{background:var(--green);color:#fff}
+.liveTopic.tr .ltNum{background:#eef1ef;color:var(--mute)}
+.liveTopic.on .ltNum{outline:2px solid var(--green);outline-offset:1px}
+.ltText{font-weight:650;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.ltText small{display:block;font-size:11.5px;font-weight:500;color:var(--mute);margin-top:2px}
+.liveNewTopic{margin-top:8px;border:1px dashed #c9d3cd!important;background:transparent!important;font-size:14px!important;padding:9px 10px!important}
+.lmTop{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.lmIdx{font-size:12px;font-weight:700;color:var(--green-deep)}
+.lmTop h1{margin:4px 0 0;font-size:24px;letter-spacing:-.02em;line-height:1.2}
+.lmNav{display:flex;gap:6px}.lmNav .btn{font-size:14px;padding:8px 12px}
+.lmNav .lmNext{border-color:var(--green);background:var(--green-soft);color:var(--green-deep);font-weight:700}
+.lmNav .btn:disabled{opacity:.45;cursor:default}
+.lmCard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.lmConcl{border:1.5px solid var(--green);box-shadow:0 0 0 4px rgba(0,122,61,.06)}
+.lmLabel{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px;font-size:12px;font-weight:800;color:var(--green-deep)}
+.lmLabel span:last-child{font-weight:500;color:var(--mute)}
+.lcRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:start;padding:7px 0;border-top:1px solid #eef1ef}
+.lcRow:first-of-type{border-top:0}
+.lcNo{font-size:14px;color:var(--green-deep);padding-top:9px;text-align:center}
+.lcText{min-height:0!important;resize:none;border-color:transparent!important;background:transparent!important;font-size:15px!important;line-height:1.45;padding:8px 8px!important;overflow:hidden}
+.lcText:hover{background:var(--paper-soft)!important}
+.lcText:focus{border-color:var(--green)!important;background:#fff!important}
+.lcDel{border:0;background:none;color:var(--mute);font-size:12.5px;padding:9px 2px}
+.lcAct{grid-column:2/-1;font-size:13.5px;padding:5px 9px;border-radius:8px;background:var(--paper-soft);cursor:pointer;margin-top:2px}
+.lcAct span{color:var(--mute);font-size:12.5px}
+.lcNew{margin-top:6px;border:1px dashed #9fcbb1!important;background:#fafdfb!important;font-size:15px!important}
+.lmDisc summary{font-size:13.5px;font-weight:600;color:var(--mute);cursor:pointer}.lmDisc summary span{font-weight:400}
+.lmDisc textarea{margin-top:8px;min-height:70px;background:var(--paper-soft);font-size:14px}
+.laRow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.laRow+.laRow{margin-top:8px}
+.laWhat{flex:1 1 260px;min-width:0;font-size:14.5px!important;padding:10px 12px!important}
+.laWho{flex:0 0 150px;font-size:14.5px!important;padding:10px 12px!important}
+.laConcl{flex:0 0 150px;font-size:14px!important;padding:9px 10px!important}
+.laDueBtn{border:1px solid #d5ddd8;background:#fff;border-radius:8px;padding:8px 11px;font-size:13.5px}
+.laDueBtn.on{border-color:var(--green);background:var(--green-soft);color:var(--green-deep);font-weight:700}
+.laDate{width:auto!important;flex:0 0 160px;font-size:14px!important;padding:8px 10px!important}
+.laDueRow .btn.pri{margin-left:auto;font-size:14px;padding:9px 16px}
+.laLoose{margin-top:12px;padding-top:10px;border-top:1px solid #eef1ef;display:flex;flex-direction:column;gap:4px}
+.laLoose .lcAct{grid-column:auto}
+.lmToggles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.lmToggles label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 12px;font-size:13.5px}
+.lmToggles input{width:auto}
+.lmToggles .btn{font-size:13.5px;padding:9px 12px}
+.lmHint{margin-left:auto;font-size:12px;color:var(--mute)}
+.linkBtn{border:0;background:none;color:var(--green-deep);font-weight:700;font-size:12.5px;letter-spacing:0;text-transform:none;padding:0}
+.lmpDoc{background:#fff;border-radius:10px;box-shadow:0 4px 16px rgba(20,40,30,.08);padding:16px 18px;font-size:12.5px;line-height:1.5}
+.lmpBrand{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;border-bottom:2px solid var(--green);padding-bottom:8px;margin-bottom:10px}
+.lmpBrand img{width:96px;height:auto}
+.lmpBrand span{text-align:right;font-size:12px}.lmpBrand b{display:block;font-size:10px;letter-spacing:.12em;color:var(--green)}
+.lmpMeta{color:var(--mute);margin-bottom:8px}
+.lmpTopic{padding:7px 8px;margin:0 -8px;border-top:1px solid #eef1ef;cursor:pointer;border-radius:6px}
+.lmpTopic.cur{background:#f0f8f3;border-top-color:transparent}
+.lmpL{font-weight:700;color:var(--green)}
+.lmpC{padding-left:10px}
+.lmpA{color:#3b4540}
+.lmpS{color:#8a948e;font-style:italic}
+.lmpNote{font-size:12px;color:var(--mute);margin:12px 2px 0;line-height:1.45}
+#meetingLive{white-space:nowrap}
+@media(max-width:1180px){.liveBody{grid-template-columns:240px minmax(0,1fr)}.liveMinutes{display:none}}
+@media(max-width:760px){.liveBody{grid-template-columns:1fr}.liveAgenda{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.liveMain{padding:16px}}
+@media (min-width:1024px){.meetingTopActions #meetingLive{margin-top:0!important;width:auto!important;flex:1}}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -653,7 +737,7 @@ nav button.on:after{
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v70 · 27.11.2026.";
+const APP_VERSION="v71 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -881,8 +965,9 @@ const actionView={scope:"mine",area:"all",importance:"all",priority:"all",search
 let notesView="standalone";
 const meetingsView={tab:"upcoming",search:""};
 function render(){
+ document.body.classList.toggle("liveMode",route==="uzivo");
  document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("on",b.dataset.nav===route));
- ({pregled:vPregled,akcije:vAkcije,projekti:vProjekti,sastanci:vSastanci,beleske:vBeleske}[route]||vPregled)();
+ ({pregled:vPregled,akcije:vAkcije,projekti:vProjekti,sastanci:vSastanci,beleske:vBeleske,uzivo:vUzivo}[route]||vPregled)();
  bindCards(); bindMenu();
 }
 function head(title,sub=""){
@@ -2169,7 +2254,7 @@ function meetingDialog(id){
   </div>
   <div class="sm" style="margin-top:8px"><span class="mute">Učesnici:</span> ${esc(participantText(m.Ucesnici)||"—")} <span class="mute">· Sistem:</span> ${esc(meetingSystem(m))}</div>
   <div class="meetingTopActions"><div class="btnrow" style="margin-top:10px"><button class="btn grow" id="shareAgenda">Podijeli agendu</button><button class="btn grow" id="shareConclusions">Podijeli zaključke</button></div>
-  <button class="btn pri" style="width:100%;margin-top:8px" id="meetingMinutes">Pregled zapisnika</button></div>
+  <button class="btn ${isDesktop()&&!finished?"":"pri"}" style="width:100%;margin-top:8px" id="meetingMinutes">Pregled zapisnika</button>${isDesktop()&&!finished?`<button class="btn pri" style="width:100%;margin-top:8px" id="meetingLive">▶ Vodi uživo</button>`:""}</div>
   <div class="kpis meetingKpis" style="margin-top:14px">
    <div class="kpi"><div class="xs">Akcije</div><div class="num">${allA.length}</div></div>
    <div class="kpi"><div class="xs">Završeno</div><div class="num">${done}</div></div>
@@ -2199,6 +2284,7 @@ function meetingDialog(id){
  $("#shareAgenda").onclick=()=>shareText(`${ser?.Naziv||m.Naslov||"Sastanak"} — agenda`,meetingAgendaText(m));
  $("#shareConclusions").onclick=()=>shareText(`${ser?.Naziv||m.Naslov||"Sastanak"} — zaključci`,meetingConclusionsText(m));
  $("#meetingMinutes").onclick=()=>meetingMinutesDialog(m.ID);
+ if($("#meetingLive"))$("#meetingLive").onclick=()=>startLive(m.ID);
  if($("#kmAddAgenda"))$("#kmAddAgenda").onclick=()=>agendaDialog(m.ID);
  if($("#kmManageAgenda"))$("#kmManageAgenda").onclick=()=>agendaManageDialog(m.ID);
  $("#kmEdit").onclick=()=>editMeeting(m);
@@ -3147,12 +3233,190 @@ function resetData(){
  $("#resetNo").onclick=closeDlg;
  $("#resetYes").onclick=()=>{localStorage.removeItem(KEY);S={items:[],people:[],meetings:[],meetingSeries:[],lastId:0,lastMeetingId:0,lastSeriesId:0};save();closeDlg();render()};
 }
+
+/* ===== v71: Sastanak uživo ===== */
+const liveView={meetingId:null,topicId:null,due:"7",dueDate:""};
+let liveSaveTimer=null;
+function liveSaveSoon(){clearTimeout(liveSaveTimer);liveSaveTimer=setTimeout(()=>{liveSaveTimer=null;save();liveRefreshSide()},350)}
+function liveFlush(){if(liveSaveTimer){clearTimeout(liveSaveTimer);liveSaveTimer=null;save()}}
+function liveTopics(m){return meetingItems(m.ID).filter(x=>x.Tip==="Beleška"&&x.AgendaStavka&&x.Status!=="Arhivirana").sort((a,b)=>(a.ID||0)-(b.ID||0))}
+function liveNextMeetingDate(m){
+ if(!m.SerijaID)return "";
+ const nx=seriesMeetings(m.SerijaID).filter(z=>Number(z.ID)!==Number(m.ID)&&(z.Datum||"")>(m.Datum||"")).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""))[0];
+ return nx?nx.Datum:"";
+}
+function liveAddDays(k){const d=new Date(today()+"T00:00:00");d.setDate(d.getDate()+k);return iso(d)}
+function liveDueValue(m){
+ if(liveView.due==="today")return today();
+ if(liveView.due==="tomorrow")return liveAddDays(1);
+ if(liveView.due==="7")return liveAddDays(7);
+ if(liveView.due==="next")return liveNextMeetingDate(m);
+ return liveView.dueDate||"";
+}
+function startLive(id){closeDlg();liveView.meetingId=id;liveView.topicId=null;route="uzivo";render();window.scrollTo(0,0)}
+function exitLive(){liveFlush();const id=liveView.meetingId;liveView.meetingId=null;route="sastanci";render();if(id&&meetingById(id))meetingDialog(id)}
+function liveTopicStatus(t,isCur){
+ if(t.PrenesenoNaSastanakID)return "Preneseno";
+ if(isCur)return "Sada se obrađuje";
+ if(agendaProcessed(t)){const c=(t.Zakljucci||[]).length,a=agendaRelatedItems(t.ID).filter(y=>y.Tip==="Akcija").length;return ["Obrađeno",c?`${c} zaklj.`:"",a?`${a} akc.`:""].filter(Boolean).join(" · ")}
+ return t.PrenesiDalje?"Bez ishoda · prenosi se":"Bez ishoda";
+}
+function vUzivo(){
+ const m=meetingById(liveView.meetingId);if(!m){route="sastanci";render();return}
+ const ser=m.SerijaID?seriesById(m.SerijaID):null;
+ const topics=liveTopics(m);
+ if(!topics.some(t=>t.ID===liveView.topicId)){const fo=topics.find(t=>!agendaProcessed(t)&&!t.PrenesenoNaSastanakID);liveView.topicId=(fo||topics[0])?.ID||null}
+ $("#view").innerHTML=`<div class="live">
+  <header class="liveHead">
+   <button class="liveBack" id="liveBack">‹ Sastanak</button>
+   <div class="liveTitle"><b>${esc(ser?.Naziv||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</b><span>${esc(participantText(m.Ucesnici)||"Učesnici nijesu uneseni")}</span></div>
+   <button class="btn" id="liveMinutesBtn">Zapisnik</button>
+   ${m.Status!=="Završen"?`<button class="btn pri" id="liveFinish">Završi sastanak</button>`:`<span class="chip">Sastanak je završen</span>`}
+  </header>
+  <div class="liveBody"><aside class="liveAgenda" id="liveAgenda"></aside><section class="liveMain" id="liveMain"></section><aside class="liveMinutes" id="liveMinutesPane"></aside></div>
+ </div>`;
+ $("#liveBack").onclick=exitLive;
+ $("#liveMinutesBtn").onclick=()=>{liveFlush();meetingMinutesDialog(m.ID)};
+ if($("#liveFinish"))$("#liveFinish").onclick=()=>{liveFlush();finishMeetingDialog(m.ID)};
+ renderLiveAgenda();renderLiveMain();renderLiveMinutes();
+}
+function liveRefreshSide(){if(route!=="uzivo")return;renderLiveAgenda();renderLiveMinutes()}
+function liveSelectTopic(id,focus=true){
+ liveFlush();liveView.topicId=id;renderLiveAgenda();renderLiveMain();renderLiveMinutes();
+ if(focus)setTimeout(()=>$("#liveNewConcl")?.focus(),0);
+}
+function renderLiveAgenda(){
+ const m=meetingById(liveView.meetingId),box=$("#liveAgenda");if(!m||!box)return;
+ const topics=liveTopics(m),done=topics.filter(t=>agendaProcessed(t)||t.PrenesenoNaSastanakID).length;
+ const pct=topics.length?Math.round(done/topics.length*100):0;
+ box.innerHTML=`<div class="laHead"><span>Agenda</span><span>${done} od ${topics.length} obrađeno</span></div>
+  <div class="laProg"><i style="width:${pct}%"></i></div>
+  ${topics.map((t,i)=>{const cur=t.ID===liveView.topicId,cls=t.PrenesenoNaSastanakID?"tr":agendaProcessed(t)?"done":"open";return `<button class="liveTopic ${cls}${cur?" on":""}" data-live-topic="${t.ID}"><span class="ltNum">${i+1}</span><span class="ltText">${esc(t.Zadatak)}<small>${esc(liveTopicStatus(t,cur))}</small></span></button>`}).join("")||`<div class="sm mute" style="padding:8px 2px">Agenda je prazna.</div>`}
+  ${m.Status!=="Završen"?`<input id="liveNewTopic" class="liveNewTopic" placeholder="+ Nova tema — Enter">`:""}`;
+ box.querySelectorAll("[data-live-topic]").forEach(b=>b.onclick=()=>liveSelectTopic(Number(b.dataset.liveTopic)));
+ const nt=$("#liveNewTopic");
+ if(nt)nt.onkeydown=e=>{
+  if(e.key!=="Enter")return;e.preventDefault();const task=nt.value.trim();if(!task)return;
+  const item={ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:task,Oblast:"Poslovno",KolegijumID:m.ID,SerijaID:m.SerijaID||null,Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",AgendaStavka:true,Zakljucak:"",Zakljucci:[],IzDiskusije:"",Obradjeno:false,PrenesiDalje:false};
+  S.items.push(item);liveFlush();save();liveSelectTopic(item.ID,false);setTimeout(()=>$("#liveNewTopic")?.focus(),0);
+ };
+}
+function renderLiveMain(){
+ const m=meetingById(liveView.meetingId),box=$("#liveMain");if(!m||!box)return;
+ const topics=liveTopics(m),n=topics.find(t=>t.ID===liveView.topicId);
+ if(!n){box.innerHTML=`<div class="empty" style="margin-top:60px">Agenda je prazna. Dodaj prvu temu lijevo i pritisni Enter.</div>`;return}
+ const idx=topics.indexOf(n),concl=n.Zakljucci||[];
+ const acts=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.AgendaIzvorID)===Number(n.ID));
+ const actRow=a=>`<div class="lcAct" data-live-item="${a.ID}">↳ ${esc(a.Zadatak)} <span>${esc([a.Odgovoran,a.Rok?fmtDate(a.Rok):"",a.Status==="Završeno"?"završeno":""].filter(Boolean).join(" · "))}</span></div>`;
+ const loose=acts.filter(a=>!a.ZakljucakID||!concl.some(c=>Number(c.ID)===Number(a.ZakljucakID)));
+ const people=[...new Set([...(m.Ucesnici||[]),...(S.people||[])])].filter(Boolean);
+ const nextDate=liveNextMeetingDate(m),dueVal=liveDueValue(m);
+ const dueBtn=(k,l)=>`<button type="button" class="laDueBtn${liveView.due===k?" on":""}" data-live-due="${k}">${l}</button>`;
+ const proj=n.PovezaniProjekatID?projectById(n.PovezaniProjekatID):null;
+ const locked=m.Status==="Završen";
+ box.innerHTML=`<div class="lmTop"><div><div class="lmIdx">Tema ${idx+1} od ${topics.length}</div><h1>${esc(n.Zadatak)}</h1></div>
+   <div class="lmNav"><button class="btn" id="livePrev" ${idx<=0?"disabled":""}>‹ Prethodna</button><button class="btn lmNext" id="liveNext" ${idx>=topics.length-1?"disabled":""}>Sljedeća tema ›</button></div></div>
+  <section class="lmCard lmConcl">
+   <div class="lmLabel"><span>Zaključci${concl.length?` · ${concl.length}`:""}</span><span>Enter dodaje sljedeći</span></div>
+   ${concl.map((c,k)=>`<div class="lcRow"><b class="lcNo">${k+1}</b><textarea class="lcText" rows="1" data-lc-text="${c.ID}" ${locked?"readonly":""}>${esc(c.Tekst)}</textarea>${locked?"":`<button type="button" class="lcDel" data-lc-del="${c.ID}" aria-label="Ukloni zaključak ${k+1}">Ukloni</button>`}${acts.filter(a=>Number(a.ZakljucakID)===Number(c.ID)).map(actRow).join("")}</div>`).join("")}
+   ${locked?"":`<input id="liveNewConcl" class="lcNew" placeholder="${concl.length+1}. ${concl.length?"Sljedeći zaključak…":"Šta je odlučeno? — Enter"}">`}
+  </section>
+  <details class="lmCard lmDisc" ${n.IzDiskusije?"open":""}><summary>+ Iz diskusije <span>(kontekst za cijelu temu, nije zaključak)</span></summary><textarea id="liveDisc" ${locked?"readonly":""}>${esc(n.IzDiskusije||"")}</textarea></details>
+  ${locked?"":`<section class="lmCard">
+   <div class="lmLabel"><span>Nova akcija</span><span>Veza sa zaključkom nije obavezna · rok jeste</span></div>
+   <div class="laRow">
+    <input id="laWhat" class="laWhat" placeholder="Šta treba uraditi… (Enter dodaje)">
+    <input id="laWho" class="laWho" list="livePeople" placeholder="Ko">
+    <select id="laConcl" class="laConcl" aria-label="Zaključak"><option value="">— tema</option>${concl.map((c,k)=>`<option value="${c.ID}">Zaključak ${k+1}</option>`).join("")}</select>
+   </div>
+   <div class="laRow laDueRow"><span class="sm mute">Rok</span>${dueBtn("today","Danas")}${dueBtn("tomorrow","Sjutra")}${dueBtn("7","7 dana")}${nextDate?dueBtn("next","Do sljedećeg sastanka"):""}<input type="date" id="laDate" class="laDate" value="${esc(dueVal)}" aria-label="Datum roka"><button class="btn pri" id="laAdd">Dodaj akciju</button></div>
+   <datalist id="livePeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>
+   ${loose.length?`<div class="laLoose"><div class="sm mute">Akcije teme bez veze sa zaključkom</div>${loose.map(actRow).join("")}</div>`:""}
+  </section>`}
+  <div class="lmToggles">
+   <label><input type="checkbox" id="liveCarry" ${n.PrenesiDalje?"checked":""} ${(n.PrenesenoNaSastanakID||locked)?"disabled":""}> ${n.PrenesenoNaSastanakID?"Tema je prenesena":"Prenesi temu na sljedeći sastanak"}</label>
+   <label><input type="checkbox" id="liveProcessed" ${n.Obradjeno?"checked":""} ${locked?"disabled":""}> Obrađeno bez zaključka</label>
+   <button class="btn" id="liveProject">${proj?`Projekat: ${esc(proj.Naziv)}`:"Poveži projekat"}</button>
+   <span class="lmHint">Čuva se automatski · Alt+↓ / Alt+↑ tema</span>
+  </div>`;
+ const grow=t=>{t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"};
+ box.querySelectorAll(".lcText").forEach(t=>{grow(t);
+  t.oninput=()=>{grow(t);const c=concl.find(z=>Number(z.ID)===Number(t.dataset.lcText));if(!c)return;c.Tekst=t.value;n.Zakljucak=concl.map(z=>z.Tekst.trim()).filter(Boolean).join("\n");liveSaveSoon()};
+  t.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.altKey){e.preventDefault();$("#liveNewConcl")?.focus()}};
+  t.onblur=()=>{const c=concl.find(z=>Number(z.ID)===Number(t.dataset.lcText));if(c&&!t.value.trim()){n.Zakljucci=concl.filter(z=>z!==c);n.Zakljucak=n.Zakljucci.map(z=>z.Tekst).join("\n");S.items.forEach(a=>{if(a.Tip==="Akcija"&&Number(a.ZakljucakID)===Number(c.ID))a.ZakljucakID=null});liveFlush();save();renderLiveMain();liveRefreshSide()}};
+ });
+ const nc=$("#liveNewConcl");
+ if(nc)nc.onkeydown=e=>{
+  if(e.key!=="Enter"||e.altKey)return;e.preventDefault();const v=nc.value.trim();
+  if(!v){$("#laWhat")?.focus();return}
+  n.Zakljucci=[...concl,{ID:++S.lastZakljucakId,Tekst:v}];n.Zakljucak=n.Zakljucci.map(z=>z.Tekst).join("\n");
+  liveFlush();save();renderLiveMain();liveRefreshSide();setTimeout(()=>$("#liveNewConcl")?.focus(),0);
+ };
+ box.querySelectorAll("[data-lc-del]").forEach(b=>b.onclick=()=>{
+  const cid=Number(b.dataset.lcDel),linked=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.ZakljucakID)===cid).length;
+  if(linked&&!confirm(`Za ovaj zaključak je vezano ${linked} akcij${linked===1?"a":"e"}. Akcije ostaju, ali bez veze sa zaključkom. Ukloniti zaključak?`))return;
+  n.Zakljucci=concl.filter(z=>Number(z.ID)!==cid);n.Zakljucak=n.Zakljucci.map(z=>z.Tekst).join("\n");
+  S.items.forEach(a=>{if(a.Tip==="Akcija"&&Number(a.ZakljucakID)===cid)a.ZakljucakID=null});
+  liveFlush();save();renderLiveMain();liveRefreshSide();
+ });
+ const disc=$("#liveDisc");if(disc)disc.oninput=()=>{n.IzDiskusije=disc.value;liveSaveSoon()};
+ box.querySelectorAll("[data-live-due]").forEach(b=>b.onclick=()=>{liveView.due=b.dataset.liveDue;liveView.dueDate="";box.querySelectorAll("[data-live-due]").forEach(z=>z.classList.toggle("on",z===b));$("#laDate").value=liveDueValue(m)});
+ const dt=$("#laDate");if(dt)dt.onchange=()=>{liveView.due="custom";liveView.dueDate=dt.value;box.querySelectorAll("[data-live-due]").forEach(z=>z.classList.remove("on"))};
+ const addAction=()=>{
+  const what=$("#laWhat").value.trim(),who=$("#laWho").value.trim(),due=$("#laDate").value;
+  if(!what){$("#laWhat").focus();return}
+  if(!who){alert("Unesi ko je odgovoran.");$("#laWho").focus();return}
+  if(!due){alert("Akcija mora imati rok.");$("#laDate").focus();return}
+  const cid=Number($("#laConcl").value)||null;
+  S.items.push({ID:++S.lastId,Tip:"Akcija",Zadatak:what,Odgovoran:who,Rok:due,Status:"Otvoreno",Znacaj:"Operativno",Prioritet:"Normalan",Oblast:"Poslovno",KolegijumID:m.ID,SerijaID:m.SerijaID||null,ProjekatID:n.PovezaniProjekatID||null,AgendaIzvorID:n.ID,ZakljucakID:cid,Sistem:meetingSystem(m),Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Projekat:"",ProjectID:null,RokIstorija:[],OdgovorniIstorija:[]});
+  liveFlush();save();norm();renderLiveMain();liveRefreshSide();
+  setTimeout(()=>{$("#laWhat")?.focus()},0);
+ };
+ if($("#laAdd"))$("#laAdd").onclick=addAction;
+ ["#laWhat","#laWho"].forEach(sel=>{const el=$(sel);if(el)el.onkeydown=e=>{if(e.key==="Enter"&&!e.altKey){e.preventDefault();addAction()}}});
+ box.querySelectorAll("[data-live-item]").forEach(el=>el.onclick=()=>{liveFlush();itemDialog(Number(el.dataset.liveItem))});
+ $("#liveCarry").onchange=e=>{n.PrenesiDalje=e.target.checked;liveFlush();save();liveRefreshSide()};
+ $("#liveProcessed").onchange=e=>{n.Obradjeno=e.target.checked;liveFlush();save();liveRefreshSide()};
+ $("#liveProject").onclick=()=>{liveFlush();agendaProjectDialog(n.ID)};
+ if($("#livePrev"))$("#livePrev").onclick=()=>{if(idx>0)liveSelectTopic(topics[idx-1].ID)};
+ if($("#liveNext"))$("#liveNext").onclick=()=>{if(idx<topics.length-1)liveSelectTopic(topics[idx+1].ID)};
+}
+function renderLiveMinutes(){
+ const m=meetingById(liveView.meetingId),box=$("#liveMinutesPane");if(!m||!box)return;
+ const ser=m.SerijaID?seriesById(m.SerijaID):null,topics=liveTopics(m);
+ box.innerHTML=`<div class="lmpHead"><span>Zapisnik uživo</span><button class="linkBtn" id="liveMinutesFull">Cijeli zapisnik ›</button></div>
+  <article class="lmpDoc">
+   <div class="lmpBrand"><img src="./logo-grawe-2021.png" alt="GRAWE"><span><b>ZAPISNIK</b>${esc(ser?.Naziv||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</span></div>
+   <div class="lmpMeta">Prisutni: ${esc(participantText(m.Ucesnici)||"—")}</div>
+   ${topics.map((t,i)=>{
+    const acts=agendaRelatedItems(t.ID).filter(y=>y.Tip==="Akcija"),c=t.Zakljucci||[];
+    const cref=a=>{const k=c.findIndex(z=>Number(z.ID)===Number(a.ZakljucakID));return k>=0&&c.length>1?` (uz ${k+1})`:""};
+    const empty=!c.length&&!acts.length&&!(t.IzDiskusije||"").trim();
+    return `<div class="lmpTopic${t.ID===liveView.topicId?" cur":""}" data-live-topic-min="${t.ID}"><b>${i+1}. ${esc(t.Zadatak)}</b>
+     ${c.length===1?`<div><span class="lmpL">Zaključak:</span> ${esc(c[0].Tekst)}</div>`:c.length>1?`<div><span class="lmpL">Zaključci:</span>${c.map((z,k)=>`<div class="lmpC">${k+1}. ${esc(z.Tekst)}</div>`).join("")}</div>`:""}
+     ${acts.map(a=>`<div class="lmpA">Akcija${cref(a)}: ${esc(a.Zadatak)} — ${esc(a.Odgovoran||"?")}, ${esc(a.Rok?fmtDate(a.Rok):"bez roka")}</div>`).join("")}
+     ${t.PrenesenoNaSastanakID?`<div class="lmpS">Preneseno na sljedeći termin</div>`:empty?`<div class="lmpS">${t.Obradjeno?"Razmotreno, bez posebnog zaključka.":t.PrenesiDalje?"Prenosi se na sljedeći sastanak.":"Još nije obrađeno"}</div>`:""}
+    </div>`}).join("")}
+  </article>
+  <p class="lmpNote">Zapisnik se puni iz zaključaka i akcija dok pišeš. Na kraju ostaje pregled i PDF.</p>`;
+ $("#liveMinutesFull").onclick=()=>{liveFlush();meetingMinutesDialog(m.ID)};
+ box.querySelectorAll("[data-live-topic-min]").forEach(el=>el.onclick=()=>liveSelectTopic(Number(el.dataset.liveTopicMin)));
+}
+document.addEventListener("keydown",e=>{
+ if(route!=="uzivo"||!e.altKey||$("#dlg")?.open)return;
+ if(e.key!=="ArrowDown"&&e.key!=="ArrowUp")return;
+ const m=meetingById(liveView.meetingId);if(!m)return;
+ const topics=liveTopics(m),i=topics.findIndex(t=>t.ID===liveView.topicId);
+ const j=e.key==="ArrowDown"?i+1:i-1;
+ if(j>=0&&j<topics.length){e.preventDefault();liveSelectTopic(topics[j].ID)}
+});
+
 function bindCards(root=document){
  root.querySelectorAll("[data-item]").forEach(c=>c.onclick=()=>itemDialog(Number(c.dataset.item)));
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-70").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-71").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
