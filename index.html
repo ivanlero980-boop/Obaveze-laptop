@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-67"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-67"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-68"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-68"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -623,6 +623,11 @@ nav button.on:after{
 
 /* v67: redovi preko cijele širine */
 @media (min-width:1024px){.app .list{align-items:stretch}.app{padding-bottom:110px}}
+
+/* v68: verzija na dnu bočnog menija */
+@media (min-width:1024px){
+  nav:after{content:attr(data-version);position:absolute;left:28px;bottom:20px;font-size:11px;color:var(--mute)}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -633,6 +638,7 @@ nav button.on:after{
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
+const APP_VERSION="v68 · 27.11.2026.";
 const KEY="obaveze_app_v1";
 const IMPORTED=[];
 const $=q=>document.querySelector(q), esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -1091,6 +1097,10 @@ function openMenu(){
   <button class="card tight menuItem" id="mExport"><div><b>Backup</b><div class="sm mute">Sačuvaj lokalne podatke kao JSON</div></div><span>›</span></button>
   <button class="card tight menuItem" id="mImport"><div><b>Vrati backup</b><div class="sm mute">Učitaj prethodno sačuvan JSON</div></div><span>›</span></button>
  </div>
+ <div class="menuSectionLabel">Aplikacija</div>
+ <div class="list">
+  <button class="card tight menuItem" id="mUpdate"><div><b>Provjeri ažuriranje</b><div class="sm mute">Instalirana verzija: ${esc(APP_VERSION)}</div></div><span>›</span></button>
+ </div>
  <div class="menuSectionLabel">Održavanje</div>
  <div class="list">
   <button class="card tight menuItem" id="mReset"><div><b class="hot">Resetuj sve podatke</b><div class="sm mute">Trajno briše lokalne podatke aplikacije</div></div><span>›</span></button>
@@ -1101,6 +1111,7 @@ function openMenu(){
  $("#mExport").onclick=exportData;
  $("#mImport").onclick=importData;
  $("#mReset").onclick=resetData;
+ $("#mUpdate").onclick=checkForUpdate;
 }
 
 function meetingsDialog(){
@@ -2980,6 +2991,32 @@ function importData(){
  };
  input.click();
 }
+async function checkForUpdate(){
+ const btn=$("#mUpdate");if(btn){btn.disabled=true;btn.querySelector(".sm").textContent="Provjeravam…"}
+ try{
+  const html=await (await fetch("index.html?check="+Date.now(),{cache:"no-store"})).text();
+  const m=html.match(/const APP_VERSION="([^"]+)"/);
+  const latest=m?m[1]:null;
+  if(!latest)throw new Error("version");
+  if(latest===APP_VERSION){
+   openDlg(`<h2>Aplikacija je ažurna</h2><p class="mute" style="margin:10px 0 16px">Instalirana je najnovija verzija: <b>${esc(APP_VERSION)}</b></p><button class="btn pri" style="width:100%" id="updOk">U redu</button>`);
+   $("#updOk").onclick=closeDlg;return;
+  }
+  openDlg(`<h2>Dostupna je nova verzija</h2><p class="mute" style="margin:10px 0 16px">Instalirano: <b>${esc(APP_VERSION)}</b><br>Dostupno: <b>${esc(latest)}</b><br><br>Podaci ostaju sačuvani; mijenja se samo aplikacija.</p><div class="btnrow"><button class="btn pri grow" id="updGo">Ažuriraj sada</button><button class="btn grow" id="updLater">Kasnije</button></div>`);
+  $("#updLater").onclick=closeDlg;
+  $("#updGo").onclick=async()=>{
+   try{
+    if("caches" in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}
+    const reg=await navigator.serviceWorker?.getRegistration();
+    if(reg)await reg.update();
+   }catch(e){}
+   location.reload();
+  };
+ }catch(e){
+  openDlg(`<h2>Provjera nije uspjela</h2><p class="mute" style="margin:10px 0 16px">Provjeri internet vezu i pokušaj ponovo. Instalirana verzija: <b>${esc(APP_VERSION)}</b></p><button class="btn pri" style="width:100%" id="updErr">Zatvori</button>`);
+  $("#updErr").onclick=closeDlg;
+ }
+}
 function resetData(){
  openDlg(`<h2>Resetuj sve podatke?</h2><p class="mute" style="margin:10px 0 16px">Ovo trajno briše sve lokalne projekte, akcije, beleške, kolegijume i ostale podatke ove aplikacije na ovom uređaju.</p><div class="btnrow"><button class="btn danger grow" id="resetYes">Obriši sve</button><button class="btn grow" id="resetNo">Otkaži</button></div>`);
  $("#resetNo").onclick=closeDlg;
@@ -2990,7 +3027,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-67").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-68").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
@@ -3012,6 +3049,7 @@ if(isStandalone()){
   if(b){e.preventDefault();b.click()}
  });
  norm();render();
+ const navEl=document.querySelector("nav");if(navEl)navEl.dataset.version="Verzija "+APP_VERSION;
 }else{
  renderBrowserLanding();
 }
