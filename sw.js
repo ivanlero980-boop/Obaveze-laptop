@@ -1,4 +1,4 @@
-const CACHE_NAME = "obaveze-laptop-v20261127-98";
+const CACHE_NAME = "obaveze-laptop-v20261127-99";
 const CORE = [
   "./",
   "./index.html",
