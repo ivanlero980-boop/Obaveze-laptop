@@ -984,7 +984,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v90 · 27.11.2026.";
+const APP_VERSION="v91 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1815,6 +1815,11 @@ function agendaDialog(meetingId){
  };
 }
 function participantText(arr){return (arr||[]).filter(Boolean).join(", ")}
+function cleanPresent(v){
+ const s=String(v||"");const parts=s.split(/[\n,]/).map(x=>x.trim()).filter(Boolean);
+ if(!parts.some(x=>/^ivan\s+\S/i.test(x)))return s;
+ return parts.filter(x=>x.toLocaleLowerCase()!=="ivan").join(", ");
+}
 function parseParticipants(v){return [...new Set((v||"").split(/[\n,]/).map(x=>x.trim()).filter(Boolean))]}
 function minutesParticipants(m){
  const arr=(m?.Ucesnici||[]).filter(Boolean).slice();
@@ -2191,7 +2196,7 @@ async function buildMinutesPdfBlob(d,extras={},generatedAt=minutesGeneratedAt())
  });
  const processedAgenda=d.agenda.filter(a=>!unconsideredAgenda.some(u=>Number(u.id)===Number(a.id)));
  const meetingNo=(extras.meetingNo||d.meetingNo||"").toString().trim();
- const present=extras.present!==undefined?extras.present:d.participants,absent=extras.absent||"";
+ const present=extras.present!==undefined?cleanPresent(extras.present):d.participants,absent=extras.absent||"";
 
  const font=(size,weight=400,italic=false)=>{
   ctx.font=`${italic?"italic ":""}${weight} ${size}px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif`;
@@ -2375,7 +2380,7 @@ function meetingMinutesDialog(meetingId,tempExtras=null){
  const d=meetingMinutesData(m);
  const saved=m.ZapisnikDraft&&typeof m.ZapisnikDraft==="object"?m.ZapisnikDraft:{};
  const extras=tempExtras||{
-  present:saved.present!==undefined?saved.present:d.participants,
+  present:saved.present!==undefined?cleanPresent(saved.present):d.participants,
   absent:saved.absent||"",
   meetingNo:saved.meetingNo!==undefined?saved.meetingNo:(d.meetingNo||""),
   intro:saved.intro||"",
@@ -3339,7 +3344,7 @@ function archiveDialog(){
  $("#dlgBody").querySelectorAll("[data-arch-pdf]").forEach(b=>b.onclick=()=>{
   const m=meetingById(Number(b.dataset.archPdf));if(!m)return;
   const d=meetingMinutesData(m),saved=m.ZapisnikDraft&&typeof m.ZapisnikDraft==="object"?m.ZapisnikDraft:{};
-  const extras={present:saved.present!==undefined?saved.present:d.participants,absent:saved.absent||"",meetingNo:saved.meetingNo!==undefined?saved.meetingNo:(d.meetingNo||""),intro:saved.intro||"",closing:saved.closing||""};
+  const extras={present:saved.present!==undefined?cleanPresent(saved.present):d.participants,absent:saved.absent||"",meetingNo:saved.meetingNo!==undefined?saved.meetingNo:(d.meetingNo||""),intro:saved.intro||"",closing:saved.closing||""};
   exportMinutesPDF(d,extras);
  });
 }
@@ -3488,7 +3493,7 @@ function closedReportDialog(){
  $("#dlgBody").querySelectorAll("[data-cr-meeting-pdf]").forEach(b=>b.onclick=()=>{
   const m=meetingById(Number(b.dataset.crMeetingPdf));if(!m)return;
   const d=meetingMinutesData(m),saved=m.ZapisnikDraft&&typeof m.ZapisnikDraft==="object"?m.ZapisnikDraft:{};
-  const extras={present:saved.present!==undefined?saved.present:d.participants,absent:saved.absent||"",meetingNo:saved.meetingNo!==undefined?saved.meetingNo:(d.meetingNo||""),intro:saved.intro||"",closing:saved.closing||""};
+  const extras={present:saved.present!==undefined?cleanPresent(saved.present):d.participants,absent:saved.absent||"",meetingNo:saved.meetingNo!==undefined?saved.meetingNo:(d.meetingNo||""),intro:saved.intro||"",closing:saved.closing||""};
   exportMinutesPDF(d,extras);
  });
 }
@@ -4127,7 +4132,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-90").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-91").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
