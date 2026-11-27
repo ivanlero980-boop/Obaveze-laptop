@@ -973,6 +973,27 @@ body.liveMode #view{max-width:none!important}
  #dlg *:focus{outline:none!important}
  #dlg *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.navSub{display:none}
+@media (min-width:1024px){
+  nav{overflow-y:auto}
+  nav:before,nav .inner{flex:0 0 auto}
+  nav:after{position:static!important;display:block;margin:auto 14px 0;padding-top:18px;flex:0 0 auto}
+  .navSub:not([hidden]){display:block;margin:2px 0 8px;padding:4px 0 6px}
+  .navSub .mtgSer{padding:6px 8px 6px 46px;border-radius:8px;margin:0;font-size:14px;border:0}
+  .navSub .mtgSer.on{background:#edf6f0;color:var(--green-deep);box-shadow:inset 3px 0 0 var(--green)}
+  .navSub .mtgSerName{font-weight:500}
+  .navSub .mtgSer.on .mtgSerName{font-weight:600}
+  .navSub .mtgSer small{font-size:12px}
+  .navSub .mtgSer .countBadge{min-width:22px;min-height:20px;padding:1px 6px;font-size:12px}
+  .navSub .mtgSerHead{padding:12px 8px 4px 46px;font-size:11px}
+  .navSub .mtgSec{margin-top:6px;padding-top:10px;border-top:0}
+  .navSub .mtgGroup{margin:2px 0}
+  .navSub .mtgGroup>summary{padding:6px 8px 6px 46px;font-size:13px}
+  .navSub .mtgGroup .mtgSer{padding-left:60px}
+  .navSub .mtgSerNew{width:auto;margin:4px 0 0 46px;border:0;background:none;padding:4px 0;color:var(--green-deep);font-weight:600;font-size:13px;min-height:0}
+  .navSub .mtgSerDone{margin:8px 0 0;padding:0}.navSub .mtgSerDone summary{padding:6px 8px 6px 46px;font-size:12.5px}
+  .mtgMain{max-width:980px}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -981,10 +1002,11 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="akcije"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span><span>Akcije</span></button>
 <button data-nav="projekti"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l1.8 2h9.2v9.5a2 2 0 0 1-2 2h-15z"/><path d="M3.5 7.5V5a2 2 0 0 1 2-2h4l1.8 2h7.2a2 2 0 0 1 2 2v2.5"/></svg></span><span>Projekti</span></button>
 <button data-nav="sastanci"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3v5M16.5 3v5M3.5 10h17M7 14h3M14 14h3M7 17h3"/></svg></span><span>Sastanci</span></button>
+<div class="navSub" id="navSubSastanci" hidden></div>
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v92 · 27.11.2026.";
+const APP_VERSION="v93 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1249,6 +1271,7 @@ const meetingsView={tab:"upcoming",search:"",series:"all"};
 function render(){
  document.body.classList.toggle("liveMode",route==="uzivo");
  document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("on",b.dataset.nav===route));
+ {const ns=document.getElementById("navSubSastanci");if(ns&&route!=="sastanci"){ns.hidden=true;ns.innerHTML=""}}
  ({pregled:vPregled,nedjelja:vNedjelja,akcije:vAkcije,projekti:vProjekti,sastanci:vSastanci,beleske:vBeleske,uzivo:vUzivo}[route]||vPregled)();
  bindCards(); bindMenu();
 }
@@ -1608,7 +1631,7 @@ function vSastanci(onlyResults=false){
  const sItem=(key,label,sub,count)=>`<button class="mtgSer${String(selSeries)===String(key)?" on":""}" data-mtg-series="${key}"><span class="mtgSerText"><span class="mtgSerName">${label}</span>${sub?`<small>${sub}</small>`:""}</span>${count?`<span class="countBadge" title="Otvorene akcije">${count}</span>`:""}</button>`;
  const act=recurringSeries().filter(z=>z.Status!=="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
  const fin=recurringSeries().filter(z=>z.Status==="Završen").sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
- const serItem=(z,short)=>{const nx=nextOf(z.ID),open=seriesOpenActions(z.ID).length;return sItem(z.ID,esc(short?seriesShortName(z):z.Naziv),nx?`sljedeći ${esc(fmtDate(nx.Datum))}`:"nema zakazanog",open)};
+ const serItem=(z,short)=>{const nx=nextOf(z.ID),open=seriesOpenActions(z.ID).length;return sItem(z.ID,esc(short?seriesShortName(z):z.Naziv),nx?`sljedeći ${esc(fmtDate(nx.Datum))}`:"",open)};
  let closedGroups=[];try{closedGroups=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}
  const groupedHTML=seriesGroupsOf(act).map(g=>{
   if(!g.group)return g.items.map(z=>serItem(z,false)).join("");
@@ -1623,12 +1646,14 @@ function vSastanci(onlyResults=false){
    ${groupedHTML||`<div class="sm mute" style="padding:8px 10px">Još nema serija.</div>`}
    <button class="btn mtgSerNew" id="newSeriesSide">+ Nova serija</button>
    <div class="mtgSerHead mtgSec">Ad hoc</div>
-   ${sItem("adhoc","Ad hoc sastanci",adhocUpcoming?`${adhocUpcoming} predstojeć${adhocUpcoming===1?"i":"a"}`:"bez serije",0)}
+   ${sItem("adhoc","Ad hoc sastanci",adhocUpcoming?`${adhocUpcoming} predstojeć${adhocUpcoming===1?"i":"a"}`:"",0)}
    ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(z=>serItem(z,false)).join("")}</details>`:""}`;
  const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(seriesFullName(selSer))}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
- $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgLayout"><aside class="mtgSeries">${asideHTML}</aside><div class="mtgMain">${serHeadHTML}${mainHTML}</div></div>`:mainHTML);
- $("#view").querySelectorAll("[data-mtg-series]").forEach(b=>b.onclick=()=>{meetingsView.series=b.dataset.mtgSeries;meetingsView.search="";vSastanci()});
- $("#view").querySelectorAll("[data-mtg-group]").forEach(d=>d.addEventListener("toggle",()=>{const g=d.dataset.mtgGroup;let c=[];try{c=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}c=c.filter(x=>x!==g);if(!d.open)c.push(g);try{localStorage.setItem("obaveze_laptop_closed_groups",JSON.stringify(c))}catch(e){}}));
+ const navSub=$("#navSubSastanci");
+ if(desk&&navSub){navSub.innerHTML=asideHTML;navSub.hidden=false}
+ $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgMain">${serHeadHTML}${mainHTML}</div>`:mainHTML);
+ document.querySelectorAll("[data-mtg-series]").forEach(b=>b.onclick=()=>{meetingsView.series=b.dataset.mtgSeries;meetingsView.search="";vSastanci()});
+ document.querySelectorAll("#navSubSastanci [data-mtg-group]").forEach(d=>d.addEventListener("toggle",()=>{const g=d.dataset.mtgGroup;let c=[];try{c=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}c=c.filter(x=>x!==g);if(!d.open)c.push(g);try{localStorage.setItem("obaveze_laptop_closed_groups",JSON.stringify(c))}catch(e){}}));
  if($("#newSeriesSide"))$("#newSeriesSide").onclick=()=>editSeries(null,false);
  if($("#mtgSerDetail"))$("#mtgSerDetail").onclick=()=>seriesDialog(selSer.ID,{fromMeetingsTab:true});
  $("#newMeetingMain").onclick=()=>selSer&&selSer.Status!=="Završen"?editMeeting({ID:0,Datum:today(),Naslov:"",Napomena:"",SerijaID:selSer.ID,Sistem:selSer.Sistem||"Osiguranje",Ucesnici:(selSer.Ucesnici||[]).slice()},true):editMeeting();
@@ -4132,7 +4157,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-92").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-93").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
