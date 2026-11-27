@@ -953,7 +953,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v83 · 27.11.2026.";
+const APP_VERSION="v84 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -3769,6 +3769,14 @@ const WK_DAYS=["ned","pon","uto","sri","čet","pet","sub"];
 function wkShort(isoDate){const d=new Date(isoDate+"T00:00:00");return `${WK_DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`}
 function wkDefaultDue(start){const fri=wkAdd(start,4);return fri<today()?today():fri}
 function wkIsMine(x){return (x.Odgovoran||"")==="Ivan"}
+function wkMeetTargetsHTML(ser,sel){
+ const ms=(S.meetings||[]).filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""));
+ const ml=m=>`${m.SerijaID?"":"Ad hoc · "}${meetingHeadingText(m)}`;
+ return `${ms.length?`<optgroup label="Zakazani sastanci">${ms.map(m=>`<option value="m:${m.ID}" ${sel===`m:${m.ID}`?"selected":""}>${esc(ml(m))}</option>`).join("")}</optgroup>`:""}
+ ${ser.length?`<optgroup label="Sljedeći termin serije">${ser.map(s=>`<option value="s:${s.ID}" ${sel===`s:${s.ID}`?"selected":""}>${esc(seriesFullName(s))}</option>`).join("")}</optgroup>`:""}
+ <optgroup label="Ad hoc"><option value="new" ${sel==="new"?"selected":""}>+ Novi ad hoc sastanak…</option></optgroup>`;
+}
+function wkAgendaTopic(t,m){return {ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:t,Oblast:"Poslovno",KolegijumID:m.ID,SerijaID:m.SerijaID||null,Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",AgendaStavka:true,Zakljucak:"",Zakljucci:[],PrenesiDalje:false,ZaSledeciSastanak:false}}
 function wkPinned(x,st,end){return !!(x.UNedjelji&&x.UNedjelji<=st&&x.Rok&&x.Rok>end)}
 function wkData(start){
  const end=wkAdd(start,6);
@@ -3784,6 +3792,8 @@ function wkData(start){
 }
 function vNedjelja(){
  if(!weekView.start)weekView.start=wkMonday(today());
+ if(weekView.pendingAdhoc){const pa=weekView.pendingAdhoc;weekView.pendingAdhoc=null;
+  if(S.lastMeetingId>pa.before&&Date.now()-pa.ts<30*60*1000){const m=meetingById(S.lastMeetingId);if(m){S.items.push(wkAgendaTopic(pa.text,m));weekView.series=`m:${m.ID}`;save();norm()}}}
  const st=weekView.start,d=wkData(st),cur=st===wkMonday(today());
  const closed=(S.weekLog||{})[st];
  const due=x=>{if(!x.Rok)return "";const k=daysTo(x.Rok);return k<0?`<span class="wkDue late">Kasni ${Math.abs(k)} d</span>`:k===0?`<span class="wkDue soon">Danas</span>`:`<span class="wkDue">${esc(wkShort(x.Rok))}</span>`};
@@ -3802,7 +3812,7 @@ function vNedjelja(){
    <div class="wkQuickRow wkQuickExtra">
     ${weekView.kind==="deleg"?`<label>Ko <input id="wkWho" list="wkPeople" placeholder="ime"></label><datalist id="wkPeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>`:""}
     ${weekView.kind==="mine"||weekView.kind==="deleg"?`<label>Rok <input type="date" id="wkDue" value="${esc(wkDefaultDue(st))}"></label>`:""}
-    ${weekView.kind==="meet"?`<label>Serija <select id="wkSeries">${seriesOptionsHTML(ser,weekView.series)}</select></label><span class="sm mute">tema ide u agendu sljedećeg termina serije</span>`:""}
+    ${weekView.kind==="meet"?`<label>Sastanak <select id="wkSeries">${wkMeetTargetsHTML(ser,weekView.series)}</select></label><span class="sm mute">${String(weekView.series).startsWith("m:")?"tema ide u agendu tog sastanka":weekView.series==="new"?"Enter otvara novi ad hoc sastanak sa ovom temom":"tema ide u agendu sljedećeg termina serije"}</span>`:""}
     ${weekView.kind==="note"?`<span class="sm mute">ide u Neobrađeno — razradiš kasnije</span>`:""}
     <span class="sm mute" style="margin-left:auto">Enter dodaje</span>
    </div>
@@ -3825,7 +3835,7 @@ function vNedjelja(){
  $("#wkNow").onclick=()=>{weekView.start=wkMonday(today());vNedjelja()};
  $("#wkClose").onclick=()=>weekCloseDialog(st);
  $("#view").querySelectorAll("[data-wk-kind]").forEach(b=>b.onclick=()=>{const v=$("#wkInput").value;weekView.kind=b.dataset.wkKind;vNedjelja();$("#wkInput").value=v;$("#wkInput").focus()});
- if($("#wkSeries"))$("#wkSeries").onchange=e=>{weekView.series=e.target.value};
+ if($("#wkSeries"))$("#wkSeries").onchange=e=>{const v=$("#wkInput").value;weekView.series=e.target.value;vNedjelja();$("#wkInput").value=v;$("#wkInput").focus()};
  const add=()=>{
   const t=$("#wkInput").value.trim();if(!t){$("#wkInput").focus();return}
   const base={Status:"Otvoreno",Znacaj:"Operativno",Prioritet:"Normalan",Oblast:"Poslovno",Sistem:"Osiguranje",Izvor:"Ad hoc","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Projekat:"",ProjectID:null,RokIstorija:[],OdgovorniIstorija:[]};
@@ -3835,8 +3845,10 @@ function vNedjelja(){
    if(!dueV){alert("Akcija mora imati rok.");$("#wkDue")?.focus();return}
    S.items.push({ID:++S.lastId,Tip:"Akcija",Zadatak:t,Odgovoran:who,Rok:dueV,...base});
   }else if(weekView.kind==="meet"){
-   const sid=Number($("#wkSeries")?.value)||null;if(!sid){alert("Izaberi seriju sastanka.");return}
-   weekView.series=String(sid);
+   const tv=$("#wkSeries")?.value||"";weekView.series=tv;
+   if(tv==="new"){weekView.pendingAdhoc={text:t,before:S.lastMeetingId,ts:Date.now()};$("#wkInput").value="";editMeeting(null,true);return}
+   if(tv.startsWith("m:")){const m=meetingById(Number(tv.slice(2)));if(!m){alert("Sastanak više ne postoji.");return}S.items.push(wkAgendaTopic(t,m));save();norm();vNedjelja();setTimeout(()=>$("#wkInput")?.focus(),0);return}
+   const sid=Number(tv.slice(2))||null;if(!sid){alert("Izaberi sastanak.");return}
    S.items.push({ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:t,Oblast:"Poslovno",KolegijumID:null,SerijaID:sid,Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",AgendaStavka:true,ZaSledeciSastanak:true,Zakljucak:"",Zakljucci:[],IzDiskusije:"",Obradjeno:false,PrenesiDalje:false});
   }else{
    S.items.push({ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:t,Oblast:"Poslovno",Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",ZaSledeciSastanak:false,AgendaStavka:false});
