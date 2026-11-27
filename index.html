@@ -1088,6 +1088,21 @@ label:has(#eImportance),label:has(#topicImportance),label:has(#crImportance){dis
 .kpiRow:hover{border-color:#bcd3c5}
 .kpiRowMain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.kpiRowMain b{font-size:14.5px;font-weight:600}.kpiRowMain span{font-size:12.5px;color:var(--mute)}
 .kpiVerdict{font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--mute)}.kpiVerdict.ok{color:var(--green-deep)}.kpiVerdict.bad{color:#b42318}
+.kpiTile{position:relative;overflow:hidden;padding:12px 15px 13px 18px!important}
+.kpiTile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#cfd6d2}
+.kpiTile.k-ok:before{background:#1f8a4c}.kpiTile.k-mid:before{background:#d08a00}.kpiTile.k-bad:before{background:#c4352b}
+.kpiTile.k-ok{background:#f3faf5}.kpiTile.k-mid{background:#fdf8ee}.kpiTile.k-bad{background:#fdf3f2}
+.kpiTop{display:flex;align-items:center;gap:7px}
+.kpiIco{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;color:#56625c}
+.k-ok .kpiIco{color:#1f8a4c}.k-mid .kpiIco{color:#b07400}.k-bad .kpiIco{color:#c4352b}
+.kpiTile .kpiVal{margin-top:4px}
+.kpiTile.k-ok .kpiVal{color:#13693a}.kpiTile.k-mid .kpiVal{color:#8a5a00}.kpiTile.k-bad .kpiVal{color:#b42318}
+.kpiTile.warn .kpiVal{color:inherit}
+.actBar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:-6px 0 18px;padding:9px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:13.5px;color:var(--text)}
+.actLbl{font-weight:700;color:var(--ink);margin-right:4px}
+.actItem{background:none;border:0;padding:0;font:inherit;color:inherit}.actItem b{font-weight:700;color:var(--ink)}
+button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c9d4ce;text-underline-offset:3px}
+.actItem em{font-style:normal;color:#b42318}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -1100,7 +1115,7 @@ label:has(#eImportance),label:has(#topicImportance),label:has(#crImportance){dis
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v100 · 27.11.2026.";
+const APP_VERSION="v101 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -4050,18 +4065,55 @@ function wkKpiData(st,d){
  const mBase=mDone.length+mLateOpen.length,mOk=mDone.filter(onTime).length;
  return {done,plan,real,hist,late,avgLate,stuck,delegDone,delegLateOpen,dBase,dOk,mDone,mLateOpen,mBase,mOk,onTime};
 }
+const KPI_ICONS={
+ real:'<path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 4-4 3 3 5-6"/>',
+ late:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+ stuck:'<path d="M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4"/><path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M6 21v-4h4"/>',
+ deleg:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="m15 11 2 2 4-4"/>',
+ mtg:'<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="m9 15 2 2 4-4"/>'
+};
+function plSr(n,f){const m10=n%10,m100=n%100;return m10===1&&m100!==11?f[0]:m10>=2&&m10<=4&&(m100<12||m100>14)?f[1]:f[2]}
+function wkActivity(st){
+ const end=wkAdd(st,6);
+ const ms=(S.meetings||[]).filter(m=>m.Datum>=st&&m.Datum<=end);
+ const held=ms.filter(m=>m.Status==="Završen"),openPast=ms.filter(m=>m.Status!=="Završen"&&m.Datum<=today());
+ const ids=new Set(ms.map(m=>Number(m.ID)));
+ const topics=S.items.filter(x=>x.Tip==="Beleška"&&x.AgendaStavka&&ids.has(Number(x.KolegijumID)));
+ const concl=topics.reduce((n,t)=>n+topicPoints(t,0).length,0);
+ const acts=S.items.filter(x=>x.Tip==="Akcija"&&ids.has(Number(x.KolegijumID)));
+ const delegated=acts.filter(x=>!wkIsMine(x)).length;
+ const done=S.items.filter(x=>x.Tip==="Akcija"&&bizItem(x)&&x.Status==="Završeno"&&!x.Otkazano&&x.ZavrsenDatum>=st&&x.ZavrsenDatum<=end).length;
+ return {ms,held,openPast,concl,acts:acts.length,delegated,done};
+}
 function wkKpiHTML(st,d){
- const k=wkKpiData(st,d);
- const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
- const spark=k.hist.length?`<span class="kpiSpark" title="Prethodne zatvorene nedjelje">${k.hist.map(x=>`<i style="height:${Math.max(3,Math.round(x.p/100*18))}px" title="${esc(wkLabel(x.s))}: ${x.p}%"></i>`).join("")}</span>`:"";
- const tile=(key,val,label,sub,cls="")=>`<button class="kpiTile ${cls}" data-kpi="${key}"><span class="kpiVal">${val}</span><span class="kpiLbl">${label}</span><span class="kpiSub">${sub}</span></button>`;
+ const k=wkKpiData(st,d),a=wkActivity(st);
+ const pct=(x,y)=>y?Math.round(x/y*100):null;
+ const band=(v,g,y)=>v===null?"na":v>=g?"ok":v>=y?"mid":"bad";
+ const dp=pct(k.dOk,k.dBase),mp=pct(k.mOk,k.mBase);
+ const spark=k.hist.length?`<span class="kpiSpark" title="Prethodne zatvorene nedjelje">${k.hist.map(x=>`<i style="height:${Math.max(3,Math.round(x.p/100*16))}px" title="${esc(wkLabel(x.s))}: ${x.p}%"></i>`).join("")}</span>`:"";
+ const tile=(key,val,label,sub,st)=>`<button class="kpiTile k-${st}" data-kpi="${key}"><span class="kpiTop"><svg class="kpiIco" viewBox="0 0 24 24" aria-hidden="true">${KPI_ICONS[key]}</svg><span class="kpiLbl">${label}</span></span><span class="kpiVal">${val}</span><span class="kpiSub">${sub}</span></button>`;
+ const mt=a.ms.length;
+ const actBar=`<div class="actBar"><span class="actLbl">Rad ove nedjelje</span>
+  <button class="actItem" data-act="mtg"><b>${a.held.length}</b> od ${mt} ${plSr(mt,["sastanka","sastanka","sastanaka"])} završen${a.held.length===1?"":"o"}${a.openPast.length?` <em>· ${a.openPast.length} održan${a.openPast.length===1?"":"o"}, nije zatvoren${a.openPast.length===1?"":"o"}</em>`:""}</button>
+  <span class="actItem"><b>${a.concl}</b> ${plSr(a.concl,["zaključak","zaključka","zaključaka"])}</span>
+  <span class="actItem"><b>${a.delegated}</b> ${plSr(a.delegated,["zadatak delegiran","zadatka delegirana","zadataka delegirano"])} na sastancima</span>
+  <span class="actItem"><b>${a.done}</b> ${plSr(a.done,["obaveza završena","obaveze završene","obaveza završeno"])}</span></div>`;
  return `<section class="kpiStrip" aria-label="Pokazatelji">
-  ${tile("real",k.real===null?"—":k.real+"%","Realizacija nedjelje",`${k.done} od ${k.plan} ${spark}`)}
-  ${tile("late",String(k.late.length),"Kasni",k.late.length?`prosječno ${k.avgLate} d`:"ništa ne kasni",k.late.length?"warn":"")}
-  ${tile("stuck",String(k.stuck.length),"Zaglavljeno","preneseno ili pomjereno 2+ puta",k.stuck.length?"warn":"")}
-  ${tile("deleg",pct(k.dOk,k.dBase),"Delegirano do roka",k.dBase?`${k.dOk} od ${k.dBase} · 8 nedjelja`:"još nema podataka")}
-  ${tile("mtg",pct(k.mOk,k.mBase),"Zadaci sa sastanaka do roka",k.mBase?`${k.mOk} od ${k.mBase} · 8 nedjelja`:"još nema podataka")}
- </section>`;
+  ${tile("real",k.real===null?"—":k.real+"%","Realizacija nedjelje",`${k.done} od ${k.plan} ${spark}`,band(k.real,80,50))}
+  ${tile("late",String(k.late.length),"Kasni",k.late.length?`prosječno ${k.avgLate} d`:"ništa ne kasni",k.late.length?"bad":"ok")}
+  ${tile("stuck",String(k.stuck.length),"Zaglavljeno","preneseno ili pomjereno 2+ puta",k.stuck.length?"mid":"ok")}
+  ${tile("deleg",dp===null?"—":dp+"%","Delegirano do roka",k.dBase?`${k.dOk} od ${k.dBase} · 8 nedjelja`:"još nema podataka",band(dp,80,60))}
+  ${tile("mtg",mp===null?"—":mp+"%","Zadaci sa sastanaka",k.mBase?`${k.mOk} od ${k.mBase} do roka · 8 ned.`:"još nema podataka",band(mp,80,60))}
+ </section>${actBar}`;
+}
+function actMeetingsDialog(st){
+ const a=wkActivity(st);
+ const row=m=>`<div class="kpiRow" data-act-meeting="${m.ID}"><div class="kpiRowMain"><b>${meetingLabel(m)}</b><span>${m.Status==="Završen"?"završen":m.Datum<=today()?"održan, nije zatvoren — otvori i klikni Završi sastanak":"zakazan"}</span></div><span class="kpiVerdict ${m.Status==="Završen"?"ok":m.Datum<=today()?"bad":""}">${m.Status==="Završen"?"završen":m.Datum<=today()?"zatvoriti":esc(wkShort(m.Datum))}</span></div>`;
+ navOpen(`<div class="row between"><h2>Sastanci ove nedjelje</h2><button class="btn" id="amClose">×</button></div>
+  <div class="kpiHow" style="margin-top:8px">Sastanak se računa kao završen kad u njemu klikneš „Završi sastanak". Tada se zaključuje zapisnik.</div>
+  ${a.ms.length?a.ms.slice().sort((x,y)=>(x.Datum||"").localeCompare(y.Datum||"")).map(row).join(""):`<div class="empty">Ove nedjelje nema sastanaka.</div>`}`,`actMtg:${st}`,{dedupe:true});
+ $("#amClose").onclick=navBack;
+ $("#dlgBody").querySelectorAll("[data-act-meeting]").forEach(el=>el.onclick=()=>meetingDialog(Number(el.dataset.actMeeting)));
 }
 function kpiDialog(key,st){
  const d=wkData(st),k=wkKpiData(st,d),T=today();
@@ -4123,7 +4175,7 @@ function wkData(start){
  const meetingGroups=meetings.map(m=>({label:meetingLabel(m),meetingId:m.ID,topics:meetingItems(m.ID).filter(n=>n.Tip==="Beleška"&&n.AgendaStavka&&n.Status!=="Arhivirana"&&!agendaProcessed(n))}));
  const queued=recurringSeries().filter(s=>s.Status!=="Završen").map(s=>{const t=seriesNextAgenda(s.ID);if(!t.length)return null;const nx=seriesMeetings(s.ID).filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""))[0];return {label:seriesFullName(s),next:nx?wkShort(nx.Datum):"nije zakazan",topics:t,seriesId:s.ID}}).filter(Boolean);
  const inbox=realNotes().filter(n=>biz(n)&&n.Status!=="Arhivirana"&&n.Status!=="Završeno").sort((a,b)=>(b.ID||0)-(a.ID||0));
- const toFinish=(S.meetings||[]).filter(m=>m.Status!=="Završen"&&m.Datum<today()).sort((a,b)=>(b.Datum||"").localeCompare(a.Datum||""));
+ const toFinish=(S.meetings||[]).filter(m=>m.Status!=="Završen"&&m.Datum<=today()&&(m.Datum<today()||meetingItems(m.ID).some(x=>x.Tip==="Akcija"||(x.Zakljucci||[]).length||x.IzDiskusije))).sort((a,b)=>(b.Datum||"").localeCompare(a.Datum||""));
  return {end,mineOpen,mineDone,deleg,meetingGroups,queued,inbox,toFinish};
 }
 function vNedjelja(){
@@ -4162,7 +4214,7 @@ function vNedjelja(){
    <section class="wkPanel"><div class="wkHead"><h2>Delegirano — follow-up</h2><span>${d.deleg.length}</span></div>
     ${d.deleg.map(delegRow).join("")||`<div class="wkEmpty">Nema delegiranih obaveza sa rokom ove nedjelje.</div>`}</section>
    <section class="wkPanel"><div class="wkHead"><h2>Za sastanke</h2><span>teme koje čekaju</span></div>
-    ${d.toFinish.length?`<div class="wkGroup wkFinish"><div class="wkGroupHead"><span class="wkFinishLbl">Održano, a nije zatvoreno</span><span>${d.toFinish.length}</span></div>${d.toFinish.map(m=>`<div class="wkTopic" data-wk-meeting="${m.ID}">${meetingLabel(m)} <span class="wkLate">prije ${Math.abs(daysTo(m.Datum))} d</span></div>`).join("")}</div>`:""}
+    ${d.toFinish.length?`<div class="wkGroup wkFinish"><div class="wkGroupHead"><span class="wkFinishLbl">Održano, a nije zatvoreno</span><span>${d.toFinish.length}</span></div>${d.toFinish.map(m=>`<div class="wkTopic" data-wk-meeting="${m.ID}">${meetingLabel(m)} <span class="wkLate">${daysTo(m.Datum)===0?"danas":`prije ${Math.abs(daysTo(m.Datum))} d`}</span></div>`).join("")}</div>`:""}
     ${d.meetingGroups.filter(g=>g.topics.length).map(g=>`<div class="wkGroup"><div class="wkGroupHead"><button class="linkBtn" data-wk-meeting="${g.meetingId}">${g.label}</button><span>zakazano</span></div>${g.topics.map(t=>`<div class="wkTopic" data-wk-note="${t.ID}">• ${esc(t.Zadatak)}</div>`).join("")}</div>`).join("")}
     ${d.queued.map(g=>`<div class="wkGroup"><div class="wkGroupHead"><button class="linkBtn" data-wk-series="${g.seriesId}">${esc(g.label)}</button><span>sljedeći: ${esc(g.next)}</span></div>${g.topics.map(t=>`<div class="wkTopic" data-wk-note="${t.ID}">• ${esc(t.Zadatak)}</div>`).join("")}</div>`).join("")}
     ${!d.meetingGroups.some(g=>g.topics.length)&&!d.queued.length&&!d.toFinish.length?`<div class="wkEmpty">Nema tema koje čekaju sastanak.</div>`:""}</section>
@@ -4212,6 +4264,7 @@ function vNedjelja(){
  $("#view").querySelectorAll("[data-wk-actmeet]").forEach(b=>b.onclick=e=>{e.stopPropagation();actionToMeeting(Number(b.dataset.wkActmeet))});
  $("#wkPick").onclick=()=>weekPickDialog(st);
  $("#view").querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>kpiDialog(b.dataset.kpi,st));
+ $("#view").querySelectorAll('[data-act="mtg"]').forEach(b=>b.onclick=()=>actMeetingsDialog(st));
 }
 function weekPickDialog(st){
  const end=wkAdd(st,6);
@@ -4367,7 +4420,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-100").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-101").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
