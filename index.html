@@ -1113,6 +1113,14 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 .delegSeg span{display:block;padding:4px 10px;border-radius:6px;font-size:13px;color:var(--mute)}
 .delegSeg input:checked+span{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .delegSeg input:focus-visible+span{outline:2px solid var(--green)}
+.prepPerson{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.prepHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px 8px}.prepHead b{font-size:15px}.prepHead span{font-size:12.5px;color:var(--mute)}.prepHead em{font-style:normal;color:#b42318}
+.prepRow{display:flex;align-items:center;gap:12px;padding:9px 16px;border-top:1px solid #eef0ef;cursor:pointer}
+.prepRow:hover{background:#fafbfa}
+.prepMain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.prepMain b{font-size:14.5px;font-weight:600}.prepMain span{font-size:12.5px;color:var(--mute)}
+.prepAdd{background:none;border:0;padding:0;font:inherit;font-size:12.5px;color:var(--mute);cursor:pointer;white-space:nowrap}.prepAdd:hover{color:var(--green-deep)}
+.prepOn{font-size:12.5px;color:var(--green-deep);white-space:nowrap}
+.prepSub{font-size:12px;font-weight:600;color:var(--mute);padding:10px 16px 4px;border-top:1px solid #eef0ef;text-transform:uppercase;letter-spacing:.05em}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -1125,7 +1133,7 @@ button.actItem{cursor:pointer;text-decoration:underline;text-decoration-color:#c
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v105 · 27.11.2026.";
+const APP_VERSION="v106 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -2047,6 +2055,27 @@ function itemShareText(x){
  return lines.join("\n");
 }
 
+function nameMatch(a,b){a=String(a||"").trim().toLocaleLowerCase();b=String(b||"").trim().toLocaleLowerCase();if(!a||!b)return false;return a===b||a.startsWith(b+" ")||b.startsWith(a+" ")}
+function prepPeople(m){return [...new Set((m.Ucesnici||[]).map(s=>String(s).trim()).filter(n=>n&&!isMe(n)))]}
+function prepPersonData(m,name){
+ const open=activeActions().filter(bizItem);
+ const theirs=open.filter(x=>nameMatch(x.Odgovoran,name)&&Number(x.KolegijumID)!==Number(m.ID)).sort((a,b)=>(a.Rok||"9").localeCompare(b.Rok||"9"));
+ const mine=open.filter(x=>isMe(x.Odgovoran)&&Number(x.KolegijumID)!==Number(m.ID)&&((x.Izvor==="1-1"&&nameMatch(x["Detalj izvora"],name))||nameMatch(x["Detalj izvora"],name))).sort((a,b)=>(a.Rok||"9").localeCompare(b.Rok||"9"));
+ return {theirs,mine};
+}
+function prepPeopleCount(m){return prepPeople(m).filter(n=>{const d=prepPersonData(m,n);return d.theirs.length||d.mine.length}).length}
+function prepPeopleHTML(m){
+ const onAgenda=new Set(meetingItems(m.ID).filter(x=>x.Tip==="Beleška"&&x.AgendaStavka&&x.PovezanaAkcijaID).map(x=>Number(x.PovezanaAkcijaID)));
+ const verdict=x=>{if(!x.Rok)return ["",""];const k=daysTo(x.Rok);return k<0?[`kasni ${-k} d`,"bad"]:k===0?["danas","mid"]:[wkShort(x.Rok),""]};
+ const srcOf=x=>{const mm=x.KolegijumID?meetingById(x.KolegijumID):null;return mm?`sa sastanka: ${meetingLabel(mm).replace(/<[^>]+>/g,"")}`:(delegLabel(x)||"")};
+ const row=x=>{const [v,c]=verdict(x);return `<div class="prepRow" data-prep-item="${x.ID}"><button class="wkCheck" data-prep-done="${x.ID}" aria-label="Označi kao završeno"></button><div class="prepMain"><b>${esc(x.Zadatak)}</b>${srcOf(x)?`<span>${esc(srcOf(x))}</span>`:""}</div>${onAgenda.has(Number(x.ID))?`<span class="prepOn">na agendi</span>`:`<button class="prepAdd" data-prep-agenda="${x.ID}">→ na agendu</button>`}<span class="kpiVerdict ${c}">${esc(v)}</span></div>`};
+ const blocks=prepPeople(m).map(n=>{const d=prepPersonData(m,n);if(!d.theirs.length&&!d.mine.length)return "";const late=d.theirs.filter(x=>x.Rok&&x.Rok<today()).length;
+  return `<div class="prepPerson"><div class="prepHead"><b>${esc(n)}</b><span>${d.theirs.length} otvoreno kod ${esc(n.split(" ")[0])}${late?` · <em>${late} kasni</em>`:""}${d.mine.length?` · ${d.mine.length} duguješ ti`:""}</span></div>
+   ${d.theirs.map(row).join("")}
+   ${d.mine.length?`<div class="prepSub">Ti duguješ — obaveze kojima je izvor ${esc(n)}</div>${d.mine.map(row).join("")}`:""}</div>`}).join("");
+ if(!blocks)return "";
+ return `<section class="prepSection"><div class="sectionHead" style="margin-top:18px"><h2>Otvoreno sa učesnicima</h2><span class="sm mute">sve što je otvoreno, odakle god da je došlo</span></div>${blocks}</section>`;
+}
 function confirmRemoveConclusion(cid){
  const la=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.ZakljucakID)===Number(cid));
  if(!la.length)return confirm("Ukloniti ovaj zaključak?");
@@ -2820,7 +2849,9 @@ function meetingDialog(id){
    <div class="kpi"><div class="xs">Otvoreno</div><div class="num">${openA.length}</div></div>
    <div class="kpi"><div class="xs">Kasni</div><div class="num">${late.length}</div></div>
   </div>
+  ${!finished&&prepPeopleCount(m)===1?prepPeopleHTML(m):""}
   ${ser&&!finished?seriesReviewHTML(m):""}
+  ${!finished&&prepPeopleCount(m)>1?prepPeopleHTML(m):""}
   ${!finished?`<div class="meetingAddGrid">
    <button class="btn pri" id="kmAddAgenda">+ Agenda</button>
    <button class="btn" id="kmAddAction">+ Akcija</button>
@@ -2851,6 +2882,9 @@ function meetingDialog(id){
  if($("#kmAddAction"))$("#kmAddAction").onclick=()=>editItem(null,"Akcija",{KolegijumID:m.ID,SerijaID:m.SerijaID||null,Oblast:"Poslovno",Sistem:meetingSystem(m)});
  if($("#kmAddNote"))$("#kmAddNote").onclick=()=>editItem(null,"Beleška",{KolegijumID:m.ID,SerijaID:m.SerijaID||null,Oblast:"Poslovno",AgendaStavka:false});
  if($("#kmFinish"))$("#kmFinish").onclick=()=>finishMeetingDialog(m.ID);
+ $("#dlgBody").querySelectorAll("[data-prep-done]").forEach(b=>b.onclick=e=>{e.stopPropagation();completeActionDialog(Number(b.dataset.prepDone))});
+ $("#dlgBody").querySelectorAll("[data-prep-agenda]").forEach(b=>b.onclick=e=>{e.stopPropagation();const x=S.items.find(z=>z.ID===Number(b.dataset.prepAgenda));if(!x)return;S.items.push(agendaTopicRecord(x.Zadatak,m,{PovezanaAkcijaID:x.ID}));save();norm();meetingDialog(m.ID)});
+ $("#dlgBody").querySelectorAll("[data-prep-item]").forEach(el=>el.onclick=()=>itemDialog(Number(el.dataset.prepItem)));
  if($("#kmNextMeeting"))$("#kmNextMeeting").onclick=()=>scheduleNextMeeting(m.ID);
  if($("#kmReopen"))$("#kmReopen").onclick=()=>{m.Status="Aktivan";delete m.ZavrsenDatum;save();norm();render();meetingDialog(m.ID)};
  if($("#kmDelete"))$("#kmDelete").onclick=()=>{
@@ -4455,7 +4489,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-105").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-106").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
