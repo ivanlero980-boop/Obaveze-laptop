@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-76"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-76"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-77"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-77"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -772,6 +772,10 @@ body.liveMode #view{max-width:none!important}
   .mtgBlockHead:first-child{margin-top:0}
   .mtgBlockHead span{font-weight:700;letter-spacing:0}
 }
+
+/* v77: potprojekti */
+.subProject{margin-left:28px;border-left:3px solid #cfe5d8}
+.subProjCard{cursor:pointer}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -782,7 +786,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v76 · 27.11.2026.";
+const APP_VERSION="v77 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -863,6 +867,9 @@ function norm(){
   if(s.AgendaIzvorID)s.AgendaIzvorID=Number(s.AgendaIzvorID)||null;
   if(s.KolegijumID)s.KolegijumID=Number(s.KolegijumID)||null;
   if(s.IzvorSerijaID)s.IzvorSerijaID=Number(s.IzvorSerijaID)||null;
+  if(s.NadProjekatID)s.NadProjekatID=Number(s.NadProjekatID)||null;
+  if(s.NadProjekatID===s.ID)s.NadProjekatID=null;
+  if(typeof s.Odgovoran!=="string")s.Odgovoran="";
  });
  // v70: serija = samo sastanci koji se ponavljaju; projekat je zaseban zapis.
  const isProj=id=>{const z=S.meetingSeries.find(q=>Number(q.ID)===Number(id));return !!(z&&z.Tip==="Projektna")};
@@ -962,6 +969,17 @@ function seriesShortName(s){const g=seriesGroup(s),pf=seriesPrefix(s);return pf&
 function seriesGroupsOf(list){const map=new Map();list.forEach(z=>{const g=seriesGroup(z);if(!map.has(g))map.set(g,[]);map.get(g).push(z)});const keys=[...map.keys()].sort((a,b)=>(a===""?-1:b===""?1:a.localeCompare(b)));return keys.map(k=>({group:k,items:map.get(k).sort((a,b)=>seriesShortName(a).localeCompare(seriesShortName(b)))}))}
 function seriesOptionsHTML(list,selectedId){return seriesGroupsOf(list).map(g=>{const opts=g.items.map(z=>`<option value="${z.ID}" ${Number(selectedId)===Number(z.ID)?"selected":""}>${esc(g.group?seriesShortName(z):z.Naziv)}</option>`).join("");return g.group?`<optgroup label="${esc(g.group)}">${opts}</optgroup>`:opts}).join("")}
 function projectById(id){const p=seriesById(id);return p&&p.Tip==="Projektna"?p:null}
+function projectChildren(id){return (S.meetingSeries||[]).filter(z=>z.Tip==="Projektna"&&Number(z.NadProjekatID)===Number(id))}
+function projectParent(p){return p&&p.NadProjekatID?projectById(p.NadProjekatID):null}
+function projectLabel(p){if(!p)return "";const par=projectParent(p);return par?`${par.Naziv} › ${p.Naziv}`:p.Naziv}
+function projectScopeIds(id){return [Number(id),...projectChildren(id).map(z=>Number(z.ID))]}
+function projectOpenActionsDeep(id){const ids=new Set(projectScopeIds(id));return activeActions().filter(x=>ids.has(Number(x.ProjekatID)))}
+function projectOptionsHTML(selectedId,includeId){
+ const act=(S.meetingSeries||[]).filter(z=>z.Tip==="Projektna"&&(z.Status!=="Završen"||Number(z.ID)===Number(selectedId)||Number(z.ID)===Number(includeId)));
+ const tops=act.filter(z=>!z.NadProjekatID||!act.some(q=>Number(q.ID)===Number(z.NadProjekatID))).sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
+ return tops.map(t=>{const kids=act.filter(z=>Number(z.NadProjekatID)===Number(t.ID)).sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
+  return `<option value="${t.ID}" ${Number(selectedId)===Number(t.ID)?"selected":""}>${esc(t.Naziv)}</option>`+kids.map(k=>`<option value="${k.ID}" ${Number(selectedId)===Number(k.ID)?"selected":""}>&nbsp;&nbsp;› ${esc(k.Naziv)}</option>`).join("")}).join("");
+}
 function projectOpenActions(id){return activeActions().filter(x=>Number(x.ProjekatID)===Number(id))}
 function projectTopics(id){const p=projectById(id);return S.items.filter(n=>n.Tip==="Beleška"&&n.Status!=="Arhivirana"&&(Number(n.PovezaniProjekatID)===Number(id)||Number(n.ProjekatID)===Number(id)||(p&&Number(p.AgendaIzvorID)===Number(n.ID))))}
 function notes(){return S.items.filter(x=>x.Tip==="Beleška")}
@@ -1012,7 +1030,7 @@ function taskCard(x){
  const priClass=x.Znacaj==="Strateško"?"priority strategic":"priority";
  const project=x.ProjectID?(S.projects||[]).find(p=>Number(p.ID)===Number(x.ProjectID)):null;
  const ser=x.SerijaID?seriesById(x.SerijaID):null;
- const projectName=(x.ProjekatID&&projectById(x.ProjekatID)?.Naziv)||(project&&(project.Naziv||project.Projekat||project.Zadatak))||x.Projekat||"";
+ const projectName=(x.ProjekatID&&projectLabel(projectById(x.ProjekatID)))||(project&&(project.Naziv||project.Projekat||project.Zadatak))||x.Projekat||"";
  return `<div class="card tight" data-item="${x.ID}" style="border-left:4px solid ${stripe}">
   <div class="taskTitle">${esc(x.Zadatak)}</div>
   <div class="meta">
@@ -1157,7 +1175,7 @@ function actionListCard(x){
  const meetingMeta=meeting?(meeting.SerijaID&&seriesById(meeting.SerijaID)?`${seriesById(meeting.SerijaID).Naziv} · ${fmtDate(meeting.Datum)}`:`Sastanak · ${fmtDate(meeting.Datum)}`):"";
  const directSeries=x.SerijaID?seriesById(x.SerijaID):null;
  const seriesMeta=!meeting&&directSeries?directSeries.Naziv:"";
- const projMeta=x.ProjekatID&&projectById(x.ProjekatID)?"Projekat: "+projectById(x.ProjekatID).Naziv:"";
+ const projMeta=x.ProjekatID&&projectById(x.ProjekatID)?"Projekat: "+projectLabel(projectById(x.ProjekatID)):"";
  const meta=[x.Oblast==="Privatno"?"Privatno":"",x.Odgovoran,x.Projekat,projMeta,seriesMeta,!meeting?meetingMeta:""].filter(Boolean).map(esc).join(" · ");
  const origin=meeting?`<div class="actionOrigin"><b>Iz sastanka</b> · ${esc(meetingMeta)}${sourceTopic?`<br>Tema: ${esc(sourceTopic.Zadatak)}`:""}</div>`:"";
  return `<div class="card secondaryCard ${cls}" data-item="${x.ID}">
@@ -1268,12 +1286,15 @@ function vBeleske(onlyResults=false){
  $("#noteSearch").oninput=e=>{noteView.search=e.target.value;vBeleske(true)};
 }
 function vProjekti(){
- const ps=projectSeries().slice().sort((a,b)=>daysTo(a.Rok)-daysTo(b.Rok)||(a.Naziv||"").localeCompare(b.Naziv||""));
- $("#view").innerHTML=head("Projekti",`${ps.length} aktivnih`)+`<div class="btnrow" style="margin-bottom:12px"><button class="btn pri grow" id="newProjectSeries">+ Novi projekat</button></div><div class="list">${ps.map(s=>{
-  const aa=projectOpenActions(s.ID),late=s.Rok&&daysTo(s.Rok)<0,next=0;
-  return `<div class="card projectCard ${late?"projectLate":""}" data-project-series="${s.ID}"><div class="projectLead"><div class="secondaryIcon">${ICONS.project}</div><div class="grow">
+ const all=projectSeries().slice().sort((a,b)=>daysTo(a.Rok)-daysTo(b.Rok)||(a.Naziv||"").localeCompare(b.Naziv||""));
+ const tops=all.filter(z=>!z.NadProjekatID||!all.some(q=>Number(q.ID)===Number(z.NadProjekatID)));
+ const ps=[];tops.forEach(t=>{ps.push(t);all.filter(z=>Number(z.NadProjekatID)===Number(t.ID)).forEach(k=>ps.push(k))});
+ $("#view").innerHTML=head("Projekti",`${all.length} aktivnih`)+`<div class="btnrow" style="margin-bottom:12px"><button class="btn pri grow" id="newProjectSeries">+ Novi projekat</button></div><div class="list">${ps.map(s=>{
+  const isSub=!!(s.NadProjekatID&&all.some(q=>Number(q.ID)===Number(s.NadProjekatID))),hasKids=all.some(z=>Number(z.NadProjekatID)===Number(s.ID));
+  const aa=hasKids?projectOpenActionsDeep(s.ID):projectOpenActions(s.ID),late=s.Rok&&daysTo(s.Rok)<0,next=0;
+  return `<div class="card projectCard ${late?"projectLate":""}${isSub?" subProject":""}" data-project-series="${s.ID}"><div class="projectLead"><div class="secondaryIcon">${ICONS.project}</div><div class="grow">
    <div class="row between" style="align-items:flex-start"><div class="taskTitle grow">${esc(s.Naziv)}</div><span class="countBadge">${aa.length} akcija</span></div>
-   <div class="meta" style="margin-top:6px">${s.Rok?`<span class="chip date">${late?`Kasni ${Math.abs(daysTo(s.Rok))} d`:`Rok ${esc(fmtDate(s.Rok))}`}</span>`:""}${s.Sistem?`<span class="chip">${esc(s.Sistem)}</span>`:""}${next?`<span class="chip">${next} za sljedeći sastanak</span>`:""}</div>
+   <div class="meta" style="margin-top:6px">${hasKids?`<span class="chip">Krovni · ${all.filter(z=>Number(z.NadProjekatID)===Number(s.ID)).length} potprojekta</span>`:""}${s.Odgovoran?`<span class="chip person">${esc(s.Odgovoran)}</span>`:""}${s.Rok?`<span class="chip date">${late?`Kasni ${Math.abs(daysTo(s.Rok))} d`:`Rok ${esc(fmtDate(s.Rok))}`}</span>`:""}${s.Sistem?`<span class="chip">${esc(s.Sistem)}</span>`:""}${next?`<span class="chip">${next} za sljedeći sastanak</span>`:""}</div>
    ${s.Cilj?`<div class="secondaryMeta">${esc(s.Cilj)}</div>`:""}
   </div></div></div>`}).join("")||`<div class="empty">Nema aktivnih projekata.</div>`}</div>`;
  $("#newProjectSeries").onclick=()=>editSeries(null,false,{Tip:"Projektna"});
@@ -1437,7 +1458,7 @@ function actionStatusLabel(x){
  return "Otvoreno";
 }
 function editSeries(s=null,selectOnSave=false,preset={}){
- const isNew=!s;s=s||{ID:0,Naziv:"",Tip:preset.Tip||"Redovna",Ucesnici:[],Sistem:"Osiguranje",Cilj:"",Rok:"",Status:"Aktivan",AgendaIzvorID:Number(preset.AgendaIzvorID)||null,KolegijumID:Number(preset.KolegijumID)||null,IzvorSerijaID:Number(preset.IzvorSerijaID)||null};
+ const isNew=!s;s=s||{ID:0,Naziv:"",NadProjekatID:Number(preset.NadProjekatID)||null,Odgovoran:"",Tip:preset.Tip||"Redovna",Ucesnici:[],Sistem:"Osiguranje",Cilj:"",Rok:"",Status:"Aktivan",AgendaIzvorID:Number(preset.AgendaIzvorID)||null,KolegijumID:Number(preset.KolegijumID)||null,IzvorSerijaID:Number(preset.IzvorSerijaID)||null};
  const isProjectForm=s.Tip==="Projektna";
  navOpen(`<h2>${isProjectForm?(isNew?"Novi projekat":"Uredi projekat"):(isNew?"Nova serija":"Uredi seriju")}</h2>
   ${isProjectForm?"":`<div class="sm mute" style="margin:-4px 0 10px">Serija je sastanak koji se ponavlja (npr. uži kolegijum, prodaja, Jour Fixe).</div>`}
@@ -1448,6 +1469,7 @@ function editSeries(s=null,selectOnSave=false,preset={}){
    <label class="f"><span class="sm mute">Krajnji rok *</span><input type="date" id="seriesDue" value="${esc(s.Rok||preset.Rok||"")}"></label>
   </div>
   ${isProjectForm?"":(()=>{const cur=isNew?(preset.Grupa||""):seriesGroup(s);const groups=allSeriesGroups();return `<label class="f"><span class="sm mute">Grupa</span><select id="seriesGroupSel"><option value="">— bez grupe —</option>${groups.map(g=>`<option value="${esc(g)}" ${groupKey(g)===groupKey(cur)?"selected":""}>${esc(g)}</option>`).join("")}<option value="__new">+ Nova grupa…</option></select></label><label class="f" id="seriesGroupNewWrap" style="display:none"><span class="sm mute">Naziv nove grupe</span><input id="seriesGroupNew" placeholder="npr. Unapređenje procesa"></label><div class="sm mute" style="margin:-4px 0 10px">Naziv serije je konkretan sastanak u grupi (npr. „Obnova polisa"). U zapisniku piše „Grupa – naziv".</div>`})()}
+  ${isProjectForm?(()=>{const hasKids=s.ID&&projectChildren(s.ID).length;const tops=projectSeries().filter(z=>Number(z.ID)!==Number(s.ID)&&!z.NadProjekatID).sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));const people=[...new Set(S.people||[])];return `<div class="row" style="gap:8px;align-items:flex-start"><label class="f grow"><span class="sm mute">Nadređeni projekat</span><select id="projParent" ${hasKids?"disabled":""}><option value="">— samostalan / krovni projekat —</option>${tops.map(z=>`<option value="${z.ID}" ${Number(s.NadProjekatID)===Number(z.ID)?"selected":""}>${esc(z.Naziv)}</option>`).join("")}</select>${hasKids?`<span class="sm mute" style="display:block;margin-top:4px">Ima potprojekte, pa ostaje krovni.</span>`:""}</label><label class="f grow"><span class="sm mute">Odgovoran</span><input id="projOwner" list="projOwnerList" value="${esc(s.Odgovoran||"")}" placeholder="Ko vodi projekat"><datalist id="projOwnerList">${people.map(x=>`<option value="${esc(x)}"></option>`).join("")}</datalist></label></div>`})():""}
   <label class="f"><span class="sm mute">Podrazumijevani sistem</span><select id="seriesSystem">${["Osiguranje","Tehnički","Zajedničko"].map(v=>`<option value="${v}" ${(s.Sistem||"Osiguranje")===v?"selected":""}>${v}</option>`).join("")}</select></label>
   <label class="f" style="${isProjectForm?"display:none":""}"><span class="sm mute">Podrazumijevani učesnici</span><textarea id="seriesParticipants" placeholder="Jedan po redu ili odvojeni zarezom">${esc((s.Ucesnici||[]).join("\n"))}</textarea></label>
   <div class="btnrow"><button class="btn pri grow" id="seriesSave">Sačuvaj</button><button class="btn grow" id="seriesCancel">Otkaži</button></div>`,
@@ -1463,6 +1485,7 @@ function editSeries(s=null,selectOnSave=false,preset={}){
   if(tip==="Projektna"&&!due){alert("Unesi krajnji rok projekta.");return}
   if(isNew){s.ID=++S.lastSeriesId;S.meetingSeries.push(s)}
   s.Naziv=name;s.Tip=tip;
+  if(isProjectForm){s.Odgovoran=($("#projOwner")?.value||"").trim();if($("#projParent")&&!$("#projParent").disabled)s.NadProjekatID=Number($("#projParent").value)||null;}
   if($("#seriesGroupSel")){
    const gv=$("#seriesGroupSel").value,ng=($("#seriesGroupNew")?.value||"").trim().replace(/\s+/g," ");
    const g=gv==="__new"?ng:gv;
@@ -1486,24 +1509,32 @@ function editSeries(s=null,selectOnSave=false,preset={}){
 }
 function projectDetailDialog(id){
  const p=projectById(id);if(!p){navBack();return}
- const open=projectOpenActions(id).slice().sort(attentionSort);
- const done=S.items.filter(x=>x.Tip==="Akcija"&&x.Status==="Završeno"&&Number(x.ProjekatID)===Number(id)).length;
+ const kids=projectChildren(id).slice().sort((a,b)=>(a.Status==="Završen")-(b.Status==="Završen")||daysTo(a.Rok)-daysTo(b.Rok));
+ const scope=new Set(projectScopeIds(id));
+ const open=projectOpenActionsDeep(id).slice().sort(attentionSort);
+ const done=S.items.filter(x=>x.Tip==="Akcija"&&x.Status==="Završeno"&&scope.has(Number(x.ProjekatID))).length;
+ const parent=projectParent(p);
  const late=open.filter(x=>daysTo(x.Rok)<0),todayA=open.filter(x=>x.Rok===today()),week=open.filter(x=>daysTo(x.Rok)>=1&&daysTo(x.Rok)<=7),later=open.filter(x=>daysTo(x.Rok)>7);
  const group=(title,arr)=>arr.length?`<div class="meetingGroup"><div class="projectActionHead"><span>${title}</span><span>${arr.length}</span></div><div class="list">${arr.map(taskCard).join("")}</div></div>`:"";
- const topics=projectTopics(id).slice().sort((a,b)=>(b.ID||0)-(a.ID||0));
+ const topics=[...projectScopeIds(id)].flatMap(pid=>projectTopics(pid)).filter((t,i,arr)=>arr.findIndex(z=>z.ID===t.ID)===i).sort((a,b)=>(b.ID||0)-(a.ID||0));
+ const kidCard=k=>{const ko=projectOpenActions(k.ID),kl=ko.filter(x=>daysTo(x.Rok)<0).length,late=k.Rok&&daysTo(k.Rok)<0&&k.Status!=="Završen";return `<div class="card tight subProjCard${late?" projectLate":""}" data-subproject="${k.ID}"><div class="row between" style="align-items:flex-start"><div class="grow"><b>${esc(k.Naziv)}</b><div class="sm mute" style="margin-top:3px">${esc([k.Odgovoran?`Odgovoran: ${k.Odgovoran}`:"",k.Rok?(late?`kasni ${Math.abs(daysTo(k.Rok))} d`:`rok ${fmtDate(k.Rok)}`):"",k.Status==="Završen"?"završen":""].filter(Boolean).join(" · "))}</div></div><span class="countBadge">${ko.length} otv.${kl?` · ${kl} kasni`:""}</span></div></div>`};
  const finished=p.Status==="Završen";
- navOpen(`<div class="row between"><div><h2>${esc(p.Naziv)}</h2><div class="sm mute">Projekat · ${esc(p.Sistem||"Osiguranje")}${finished?" · Završen":""}</div></div><button class="btn" id="pdc">×</button></div>
+ navOpen(`<div class="row between"><div><h2>${esc(p.Naziv)}</h2><div class="sm mute">${parent?`Potprojekat · <button class="seriesLink" id="pdParent" style="padding:0">${esc(parent.Naziv)} ›</button>`:kids.length?"Krovni projekat":"Projekat"}${p.Odgovoran?` · Odgovoran: ${esc(p.Odgovoran)}`:""}${finished?" · Završen":""}</div></div><button class="btn" id="pdc">×</button></div>
   <div class="meta" style="margin-top:10px">${p.Rok?`<span class="chip date">${daysTo(p.Rok)<0&&!finished?`Kasni ${Math.abs(daysTo(p.Rok))} d`:`Rok ${esc(fmtDate(p.Rok))}`}</span>`:""}<span class="chip">${open.length} otvoren${open.length===1?"a akcija":"ih akcija"}</span>${done?`<span class="chip">${done} završen${done===1?"a":"ih"}</span>`:""}</div>
   ${p.Cilj?`<div class="card tight" style="margin-top:10px"><div class="sm mute">Cilj / opis</div><div style="margin-top:4px;white-space:pre-wrap">${esc(p.Cilj)}</div></div>`:""}
-  <div class="btnrow" style="margin-top:12px">${!finished?`<button class="btn pri grow" id="pdAction">+ Akcija</button>`:""}<button class="btn grow" id="pdEdit">Uredi</button>${finished?`<button class="btn grow" id="pdReopen">Ponovo otvori</button>`:`<button class="btn grow" id="pdFinish">Završi projekat</button>`}</div>
-  <div class="sectionHead" style="margin-top:18px"><h2>Otvorene akcije</h2><span class="countBadge">${open.length}</span></div>
+  ${kids.length?`<div class="sectionHead" style="margin-top:16px"><h2>Potprojekti</h2><span class="countBadge">${kids.length}</span></div><div class="list">${kids.map(kidCard).join("")}</div>`:""}
+  <div class="btnrow" style="margin-top:12px">${!finished?`<button class="btn pri grow" id="pdAction">+ Akcija</button>`:""}${!finished&&!parent?`<button class="btn grow" id="pdSub">+ Potprojekat</button>`:""}<button class="btn grow" id="pdEdit">Uredi</button>${finished?`<button class="btn grow" id="pdReopen">Ponovo otvori</button>`:`<button class="btn grow" id="pdFinish">Završi projekat</button>`}</div>
+  <div class="sectionHead" style="margin-top:18px"><h2>Otvorene akcije${kids.length?" — svi dijelovi":""}</h2><span class="countBadge">${open.length}</span></div>
   ${group("Kasni",late)}${group("Danas",todayA)}${group("Dospijeva u narednih 7 dana",week)}${group("Kasnije",later)}${!open.length?`<div class="empty">Nema otvorenih akcija na ovom projektu.</div>`:""}
   ${topics.length?`<div class="sectionHead"><h2>Teme i beleške</h2><span class="countBadge">${topics.length}</span></div><div class="list">${topics.map(n=>{const mm=meetingById(n.KolegijumID);return `<div class="card tight" data-project-topic="${n.ID}"><b>${esc(n.Zadatak)}</b><div class="sm mute" style="margin-top:4px">${n.AgendaStavka?"Tema":"Beleška"} · ${mm?meetingLabel(mm):"bez sastanka"}</div></div>`}).join("")}</div>`:""}`,
   `project:${id}`,{refresh:()=>projectDetailDialog(id)});
  $("#pdc").onclick=navBack;
  $("#pdEdit").onclick=()=>editSeries(p,false);
+ if($("#pdParent"))$("#pdParent").onclick=()=>projectDetailDialog(parent.ID);
+ if($("#pdSub"))$("#pdSub").onclick=()=>editSeries(null,false,{Tip:"Projektna",NadProjekatID:p.ID});
+ $("#dlgBody").querySelectorAll("[data-subproject]").forEach(b=>b.onclick=()=>projectDetailDialog(Number(b.dataset.subproject)));
  if($("#pdAction"))$("#pdAction").onclick=()=>editItem(null,"Akcija",{ProjekatID:p.ID,Oblast:"Poslovno",Sistem:p.Sistem||"Osiguranje"});
- if($("#pdFinish"))$("#pdFinish").onclick=()=>{const c=projectOpenActions(p.ID).length;if(confirm(`${c?`Projekat ima ${c} otvoren${c===1?"u akciju":"ih akcija"}. `:""}Završiti projekat "${p.Naziv}"?`)){p.Status="Završen";p.ZavrsenDatum=today();save();norm();render();projectDetailDialog(p.ID)}};
+ if($("#pdFinish"))$("#pdFinish").onclick=()=>{const c=projectOpenActions(p.ID).length,ak=kids.filter(k=>k.Status!=="Završen").length;if(confirm(`${c?`Projekat ima ${c} otvoren${c===1?"u akciju":"ih akcija"}. `:""}${ak?`${ak} potprojek${ak===1?"at je":"ta su"} još aktivn${ak===1?"o":"a"}. `:""}Završiti projekat "${p.Naziv}"?`)){p.Status="Završen";p.ZavrsenDatum=today();save();norm();render();projectDetailDialog(p.ID)}};
  if($("#pdReopen"))$("#pdReopen").onclick=()=>{p.Status="Aktivan";delete p.ZavrsenDatum;save();norm();render();projectDetailDialog(p.ID)};
  $("#dlgBody").querySelectorAll("[data-project-topic]").forEach(b=>b.onclick=()=>noteDialog(Number(b.dataset.projectTopic)));
  bindCards($("#dlgBody"));
@@ -2648,7 +2679,7 @@ function editItem(x=null,type="Akcija",preset={}){
  <label class="f"><span class="sm mute">${x.Tip==="Projekat"?"Naziv projekta":x.Tip==="Beleška"?"Naslov":"Šta treba uraditi?"}</span><textarea id="eTask" class="${x.Tip==="Beleška"?"noteInput":""}" ${x.Tip==="Beleška"?`rows="2" placeholder="Kratka teza / naslov"`:""}>${esc(x.Tip==="Projekat"?(x.Projekat||x.Zadatak):x.Zadatak||"")}</textarea></label>
 ${x.Tip==="Beleška"?`<label class="f"><span class="sm mute">Tekst (opciono)</span><textarea id="eNoteText" class="noteInput" rows="8" placeholder="Detalji beleške">${esc(x.Tekst||"")}</textarea></label>`:""}
  ${x.Tip!=="Projekat"&&!x.KolegijumID?`<label class="f"><span class="sm mute">Oblast</span><select id="eArea"><option value="Poslovno" ${(x.Oblast||"Poslovno")==="Poslovno"?"selected":""}>Poslovno</option><option value="Privatno" ${x.Oblast==="Privatno"?"selected":""}>Privatno</option></select></label>`:""}
- ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row" id="eSeriesWrap" style="gap:8px;align-items:flex-start"><label class="f grow"><span class="sm mute">Serija sastanaka</span><select id="eSeries"><option value="">Nije vezano</option>${seriesOptionsHTML(itemSeries,x.SerijaID)}</select></label><label class="f grow"><span class="sm mute">Projekat</span><select id="eProject"><option value="">Nije vezano</option>${(S.meetingSeries||[]).filter(s=>s.Tip==="Projektna"&&(s.Status!=="Završen"||Number(s.ID)===Number(x.ProjekatID))).slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||"")).map(s=>`<option value="${s.ID}" ${Number(x.ProjekatID)===Number(s.ID)?"selected":""}>${esc(s.Naziv)}</option>`).join("")}</select></label></div>`:""}
+ ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row" id="eSeriesWrap" style="gap:8px;align-items:flex-start"><label class="f grow"><span class="sm mute">Serija sastanaka</span><select id="eSeries"><option value="">Nije vezano</option>${seriesOptionsHTML(itemSeries,x.SerijaID)}</select></label><label class="f grow"><span class="sm mute">Projekat</span><select id="eProject"><option value="">Nije vezano</option>${projectOptionsHTML(x.ProjekatID)}</select></label></div>`:""}
  ${(x.Tip==="Akcija"||x.Tip==="Beleška")?`<div class="row"><label class="f grow"><span class="sm mute">Tip značaja</span><select id="eImportance"><option value="Operativno" ${(x.Znacaj||"Operativno")==="Operativno"?"selected":""}>Operativno</option><option value="Strateško" ${x.Znacaj==="Strateško"?"selected":""}>Strateško</option></select></label><label class="f grow"><span class="sm mute">Prioritet</span><select id="ePriority">${["Visok","Normalan","Nizak"].map(v=>`<option value="${v}" ${(x.Prioritet||"Normalan")===v?"selected":""}>${v}</option>`).join("")}</select></label></div>`:""}
 
  ${x.Tip==="Akcija"?`<div class="row"><label class="f grow"><span class="sm mute">Odgovoran *</span><input id="eOwner" value="${esc(x.Odgovoran||"Ivan")}" ${isNew?"":"readonly"}></label><label class="f grow"><span class="sm mute">Rok *</span><input type="date" id="eDue" value="${esc(x.Rok||"")}" ${isNew?"":"readonly"}></label></div>${!isNew?`<div class="sm mute" style="margin-top:-4px">Odgovorni i rok se mijenjaju iz detalja akcije, uz čuvanje istorije.</div>`:""}`:""}
@@ -2844,10 +2875,10 @@ function agendaOutcomeDialog(noteId){
 }
 function agendaProjectDialog(noteId){
  const n=S.items.find(x=>Number(x.ID)===Number(noteId)&&x.AgendaStavka===true);if(!n)return;
- const projects=projectSeries().slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
+ const projActive=projectSeries();const projects=projActive.filter(z=>!z.NadProjekatID||!projActive.some(q=>Number(q.ID)===Number(z.NadProjekatID))).sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||"")).flatMap(t=>[t,...projActive.filter(z=>Number(z.NadProjekatID)===Number(t.ID)).sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""))]);
  navOpen(`<div class="row between"><div><h2>Projekat</h2><div class="sm mute">${esc(n.Zadatak)}</div></div><button class="btn" id="apClose">×</button></div>
   <div class="sm mute" style="margin-top:12px">Poveži temu sa postojećim projektom ili napravi novi.</div>
-  <div class="list" style="margin-top:12px">${projects.map(p=>`<button class="card tight" data-agenda-project="${p.ID}"><div class="row between"><div><b>${esc(p.Naziv)}</b><div class="sm mute">${p.Rok?`Rok ${esc(fmtDate(p.Rok))}`:"Aktivan projekat"}</div></div><span>${Number(n.PovezaniProjekatID)===Number(p.ID)?"✓":"›"}</span></div></button>`).join("")||`<div class="empty">Nema aktivnih projekata.</div>`}</div>
+  <div class="list" style="margin-top:12px">${projects.map(p=>`<button class="card tight${p.NadProjekatID?" subProject":""}" data-agenda-project="${p.ID}"><div class="row between"><div><b>${esc(p.NadProjekatID?p.Naziv:p.Naziv)}</b><div class="sm mute">${esc([projectParent(p)?`dio projekta ${projectParent(p).Naziv}`:"",p.Odgovoran,p.Rok?`rok ${fmtDate(p.Rok)}`:""].filter(Boolean).join(" · ")||"Aktivan projekat")}</div></div><span>${Number(n.PovezaniProjekatID)===Number(p.ID)?"✓":"›"}</span></div></button>`).join("")||`<div class="empty">Nema aktivnih projekata.</div>`}</div>
   <button class="btn pri" style="width:100%;margin-top:12px" id="apNew">+ Novi projekat</button>
   ${n.PovezaniProjekatID?`<button class="btn" style="width:100%;margin-top:8px" id="apClear">Ukloni vezu sa projektom</button>`:""}`,
   `agendaProject:${noteId}`,{dedupe:false});
@@ -3457,7 +3488,7 @@ function renderLiveMain(){
   <div class="lmToggles">
    <label><input type="checkbox" id="liveCarry" ${n.PrenesiDalje?"checked":""} ${(n.PrenesenoNaSastanakID||locked)?"disabled":""}> ${n.PrenesenoNaSastanakID?"Tema je prenesena":"Prenesi temu na sljedeći sastanak"}</label>
    <label><input type="checkbox" id="liveProcessed" ${n.Obradjeno?"checked":""} ${locked?"disabled":""}> Obrađeno bez zaključka</label>
-   <button class="btn" id="liveProject">${proj?`Projekat: ${esc(proj.Naziv)}`:"Poveži projekat"}</button>
+   <button class="btn" id="liveProject">${proj?`Projekat: ${esc(projectLabel(proj))}`:"Poveži projekat"}</button>
    <span class="lmHint">Potvrđeno (Enter) se čuva odmah · nedodat unos ostaje kao nacrt teme · Alt+↓ / Alt+↑ tema</span>
   </div>`;
  const grow=t=>{t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"};
@@ -3546,7 +3577,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-76").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-77").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
