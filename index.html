@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-74"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-74"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-75"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-75"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -774,7 +774,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v74 · 27.11.2026.";
+const APP_VERSION="v75 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -937,8 +937,20 @@ function projectSeries(){return (S.meetingSeries||[]).filter(s=>s.Tip==="Projekt
 function recurringSeries(){return (S.meetingSeries||[]).filter(s=>s.Tip!=="Projektna")}
 // Grupa serije: izričito upisana, inače prefiks naziva ispred " – " (npr. "KF – usklađenost" → "KF").
 function seriesPrefix(s){const m=String(s?.Naziv||"").match(/^(.{1,40}?)\s+[–—-]\s+(\S.*)$/);return m?{group:m[1].trim(),rest:m[2].trim()}:null}
-function seriesGroup(s){if(s&&typeof s.Grupa==="string"&&s.Grupa.trim())return s.Grupa.trim();return seriesPrefix(s)?.group||""}
-function seriesShortName(s){const g=seriesGroup(s),pf=seriesPrefix(s);return pf&&pf.group===g?pf.rest:(s?.Naziv||"")}
+function groupKey(g){return String(g||"").trim().replace(/\s+/g," ").toLocaleLowerCase()}
+function rawSeriesGroup(s){if(s&&typeof s.Grupa==="string"&&s.Grupa.trim())return s.Grupa.trim().replace(/\s+/g," ");return seriesPrefix(s)?.group||""}
+function groupLabel(key){
+ // naziv grupe: izričito upisan ima prednost, inače najčešći oblik prefiksa
+ const cands=recurringSeries().filter(z=>groupKey(rawSeriesGroup(z))===key);
+ const explicit=cands.find(z=>typeof z.Grupa==="string"&&z.Grupa.trim());
+ if(explicit)return explicit.Grupa.trim().replace(/\s+/g," ");
+ const cnt=new Map();cands.forEach(z=>{const g=rawSeriesGroup(z);cnt.set(g,(cnt.get(g)||0)+1)});
+ return [...cnt.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||key;
+}
+function seriesGroup(s){const k=groupKey(rawSeriesGroup(s));return k?groupLabel(k):""}
+function allSeriesGroups(){return [...new Set(recurringSeries().map(seriesGroup).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
+function seriesFullName(s){if(!s)return "";const g=seriesGroup(s),pf=seriesPrefix(s);if(g&&!(pf&&groupKey(pf.group)===groupKey(g)))return `${g} – ${s.Naziv}`;return s.Naziv||""}
+function seriesShortName(s){const g=seriesGroup(s),pf=seriesPrefix(s);return pf&&groupKey(pf.group)===groupKey(g)?pf.rest:(s?.Naziv||"")}
 function seriesGroupsOf(list){const map=new Map();list.forEach(z=>{const g=seriesGroup(z);if(!map.has(g))map.set(g,[]);map.get(g).push(z)});const keys=[...map.keys()].sort((a,b)=>(a===""?-1:b===""?1:a.localeCompare(b)));return keys.map(k=>({group:k,items:map.get(k).sort((a,b)=>seriesShortName(a).localeCompare(seriesShortName(b)))}))}
 function seriesOptionsHTML(list,selectedId){return seriesGroupsOf(list).map(g=>{const opts=g.items.map(z=>`<option value="${z.ID}" ${Number(selectedId)===Number(z.ID)?"selected":""}>${esc(g.group?seriesShortName(z):z.Naziv)}</option>`).join("");return g.group?`<optgroup label="${esc(g.group)}">${opts}</optgroup>`:opts}).join("")}
 function projectById(id){const p=seriesById(id);return p&&p.Tip==="Projektna"?p:null}
@@ -962,7 +974,7 @@ function seriesNotes(id){return notes().filter(n=>n.Status!=="Arhivirana"&&Numbe
 function seriesNextAgenda(id){return seriesNotes(id).filter(n=>!n.KolegijumID&&n.ZaSledeciSastanak===true)}
 function meetingLabel(m){
  const s=m&&m.SerijaID?seriesById(m.SerijaID):null;
- return `${s?esc(s.Naziv):esc(m?.Naslov||"Sastanak")} · ${esc(fmtDate(m?.Datum||""))}`;
+ return `${s?esc(seriesFullName(s)):esc(m?.Naslov||"Sastanak")} · ${esc(fmtDate(m?.Datum||""))}`;
 }
 
 
@@ -1041,7 +1053,7 @@ function vPregled(){
    const ser=m.SerijaID?seriesById(m.SerijaID):null;
    return `<div class="todayRow late" data-dashboard-meeting="${m.ID}">
     <div class="dateBox"><div class="dateDay">${(m.Datum||"").split("-")[2]||""}</div><div class="dateMonth">${monthShort(m.Datum||"")}</div></div>
-    <div><div class="rowTitle">${esc(ser?.Naziv||m.Naslov||"Sastanak")}</div><div class="rowMeta">Sastanak za završiti</div></div>
+    <div><div class="rowTitle">${esc((ser?seriesFullName(ser):"")||m.Naslov||"Sastanak")}</div><div class="rowMeta">Sastanak za završiti</div></div>
     <div class="rowDue">Prije ${Math.abs(daysTo(m.Datum))} d</div>
    </div>`;
  }).join("");
@@ -1051,7 +1063,7 @@ function vPregled(){
    const people=(m.Ucesnici||[]).length?participantText(m.Ucesnici):"Učesnici nijesu uneseni";
    return `<div class="upcomingRow" data-dashboard-meeting="${m.ID}">
     <div class="dateBox"><div class="dateDay">${(m.Datum||"").split("-")[2]||""}</div><div class="dateMonth">${monthShort(m.Datum||"")}</div></div>
-    <div><div class="rowTitle">${esc(ser?.Naziv||m.Naslov||"Sastanak")}</div><div class="rowMeta">${esc(people)}</div></div>
+    <div><div class="rowTitle">${esc((ser?seriesFullName(ser):"")||m.Naslov||"Sastanak")}</div><div class="rowMeta">${esc(people)}</div></div>
     <div class="rowDue">${esc(due)}</div>
    </div>`;
  }).join(""):`<div class="dashboardEmpty">Nema sastanaka danas ni u narednih 7 dana.</div>`;
@@ -1374,7 +1386,7 @@ function vSastanci(onlyResults=false){
    ${sItem("adhoc","Ad hoc sastanci","bez serije",0)}
    <button class="btn mtgSerNew" id="newSeriesSide">+ Nova serija</button>
    ${fin.length?`<details class="mtgSerDone"><summary>Završene serije (${fin.length})</summary>${fin.map(z=>serItem(z,false)).join("")}</details>`:""}`;
- const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(selSer.Naziv)}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
+ const serHeadHTML=selSer?`<div class="mtgSerTitle"><div><h2>${esc(seriesFullName(selSer))}</h2><div class="sm mute">${esc(participantText(selSer.Ucesnici)||"Učesnici nijesu određeni")} · ${seriesMeetings(selSer.ID).length} termina · ${seriesOpenActions(selSer.ID).length} otvorenih akcija</div></div><button class="btn" id="mtgSerDetail">Detalji serije ›</button></div>`:selSeries==="adhoc"?`<div class="mtgSerTitle"><div><h2>Ad hoc sastanci</h2><div class="sm mute">Sastanci bez serije</div></div></div>`:"";
  $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+(desk?`<div class="mtgLayout"><aside class="mtgSeries">${asideHTML}</aside><div class="mtgMain">${serHeadHTML}${mainHTML}</div></div>`:mainHTML);
  $("#view").querySelectorAll("[data-mtg-series]").forEach(b=>b.onclick=()=>{meetingsView.series=b.dataset.mtgSeries;meetingsView.search="";vSastanci()});
  $("#view").querySelectorAll("[data-mtg-group]").forEach(d=>d.addEventListener("toggle",()=>{const g=d.dataset.mtgGroup;let c=[];try{c=JSON.parse(localStorage.getItem("obaveze_laptop_closed_groups")||"[]")}catch(e){}c=c.filter(x=>x!==g);if(!d.open)c.push(g);try{localStorage.setItem("obaveze_laptop_closed_groups",JSON.stringify(c))}catch(e){}}));
@@ -1425,20 +1437,29 @@ function editSeries(s=null,selectOnSave=false,preset={}){
    <label class="f"><span class="sm mute">Cilj / opis projekta</span><textarea id="seriesGoal" placeholder="Šta treba postići?">${esc(s.Cilj||preset.Cilj||"")}</textarea></label>
    <label class="f"><span class="sm mute">Krajnji rok *</span><input type="date" id="seriesDue" value="${esc(s.Rok||preset.Rok||"")}"></label>
   </div>
-  ${isProjectForm?"":`<label class="f"><span class="sm mute">Grupa (opciono)</span><input id="seriesGroup" list="seriesGroupList" value="${esc(s.Grupa||"")}" placeholder="${esc(seriesPrefix({Naziv:s.Naziv||preset.Naziv||""})?.group?`Prazno = ${seriesPrefix({Naziv:s.Naziv||preset.Naziv||""}).group} (iz naziva)`:"npr. Procesi, Ključne funkcije")}"><datalist id="seriesGroupList">${[...new Set(recurringSeries().map(seriesGroup).filter(Boolean))].sort().map(g=>`<option value="${esc(g)}"></option>`).join("")}</datalist><span class="sm mute" style="display:block;margin-top:4px">Ako naziv počinje sa „Grupa – …", serija se grupiše sama.</span></label>`}
+  ${isProjectForm?"":(()=>{const cur=isNew?(preset.Grupa||""):seriesGroup(s);const groups=allSeriesGroups();return `<label class="f"><span class="sm mute">Grupa</span><select id="seriesGroupSel"><option value="">— bez grupe —</option>${groups.map(g=>`<option value="${esc(g)}" ${groupKey(g)===groupKey(cur)?"selected":""}>${esc(g)}</option>`).join("")}<option value="__new">+ Nova grupa…</option></select></label><label class="f" id="seriesGroupNewWrap" style="display:none"><span class="sm mute">Naziv nove grupe</span><input id="seriesGroupNew" placeholder="npr. Unapređenje procesa"></label><div class="sm mute" style="margin:-4px 0 10px">Naziv serije je konkretan sastanak u grupi (npr. „Obnova polisa"). U zapisniku piše „Grupa – naziv".</div>`})()}
   <label class="f"><span class="sm mute">Podrazumijevani sistem</span><select id="seriesSystem">${["Osiguranje","Tehnički","Zajedničko"].map(v=>`<option value="${v}" ${(s.Sistem||"Osiguranje")===v?"selected":""}>${v}</option>`).join("")}</select></label>
   <label class="f" style="${isProjectForm?"display:none":""}"><span class="sm mute">Podrazumijevani učesnici</span><textarea id="seriesParticipants" placeholder="Jedan po redu ili odvojeni zarezom">${esc((s.Ucesnici||[]).join("\n"))}</textarea></label>
   <div class="btnrow"><button class="btn pri grow" id="seriesSave">Sačuvaj</button><button class="btn grow" id="seriesCancel">Otkaži</button></div>`,
   `seriesForm:${isNew?"new":s.ID}`,{dedupe:false});
  const updateType=()=>{$("#projectSeriesFields").style.display=$("#seriesType").value==="Projektna"?"block":"none"};
  updateType();
+ if($("#seriesGroupSel"))$("#seriesGroupSel").onchange=()=>{const n=$("#seriesGroupSel").value==="__new";$("#seriesGroupNewWrap").style.display=n?"block":"none";if(n)$("#seriesGroupNew").focus()};
  $("#seriesCancel").onclick=navBack;
  $("#seriesSave").onclick=()=>{
   const name=$("#seriesName").value.trim();if(!name){alert(isProjectForm?"Unesi naziv projekta.":"Unesi naziv serije.");return}
+  if($("#seriesGroupSel")?.value==="__new"&&!($("#seriesGroupNew").value||"").trim()){alert("Unesi naziv nove grupe ili izaberi postojeću.");return}
   const tip=$("#seriesType").value||"Redovna",due=$("#seriesDue")?.value||"";
   if(tip==="Projektna"&&!due){alert("Unesi krajnji rok projekta.");return}
   if(isNew){s.ID=++S.lastSeriesId;S.meetingSeries.push(s)}
-  s.Naziv=name;s.Tip=tip;if($("#seriesGroup"))s.Grupa=$("#seriesGroup").value.trim();s.Sistem=$("#seriesSystem").value||"Osiguranje";s.Ucesnici=parseParticipants($("#seriesParticipants").value);s.Status=s.Status==="Završen"?"Završen":"Aktivan";
+  s.Naziv=name;s.Tip=tip;
+  if($("#seriesGroupSel")){
+   const gv=$("#seriesGroupSel").value,ng=($("#seriesGroupNew")?.value||"").trim().replace(/\s+/g," ");
+   const g=gv==="__new"?ng:gv;
+   const pf=seriesPrefix({Naziv:name});
+   if(g){s.Grupa=g;if(pf&&groupKey(pf.group)===groupKey(g))s.Naziv=pf.rest;}   // prefiks iz naziva više nije potreban
+   else{s.Grupa="";if(pf)s.Grupa="";}
+  }s.Sistem=$("#seriesSystem").value||"Osiguranje";s.Ucesnici=parseParticipants($("#seriesParticipants").value);s.Status=s.Status==="Završen"?"Završen":"Aktivan";
   if(tip==="Projektna"){s.Cilj=$("#seriesGoal").value.trim();s.Rok=due}else{s.Cilj=s.Cilj||"";s.Rok=s.Rok||""}
   if(s.AgendaIzvorID){const source=S.items.find(n=>Number(n.ID)===Number(s.AgendaIzvorID));if(source){source.PovezaniProjekatID=s.ID;}}
   save();norm();render();
@@ -1633,7 +1654,7 @@ function meetingMinutesData(m){
  const conclRef=x=>{if(!x.ZakljucakID||!x.AgendaIzvorID)return null;const t=S.items.find(n=>Number(n.ID)===Number(x.AgendaIzvorID));const k=t?(t.Zakljucci||[]).findIndex(c=>Number(c.ID)===Number(x.ZakljucakID)):-1;return k>=0?k+1:null};
  const actionObj=x=>({id:x.ID,conclusionRef:conclRef(x),title:x.Zadatak,owner:x.Odgovoran||"",due:x.Rok?fmtDate(x.Rok):"",status:actionStatusLabel(x),rawStatus:x.Status||"",detail:x.ZavrsniKomentar||x["Detalji dogovora"]||x.Napomena||"",agendaId:Number(x.AgendaIzvorID)||null});
  return {
-  title:ser?.Naziv||m.Naslov||"Sastanak",
+  title:(ser?seriesFullName(ser):"")||m.Naslov||"Sastanak",
   subtitle:"",
   date:fmtDate(m.Datum||""),
   meetingNo:meetingOrdinal(m),
@@ -2326,7 +2347,7 @@ function meetingDialog(id){
   const cls=transferred?" agendaTransferred":(!processed?" agendaUnprocessed":"");
   return `<div class="card tight${cls}" data-meeting-note="${n.ID}"><b>${esc(n.Zadatak)}</b>${n.Zakljucak?`<div class="agendaConclusion">${esc(n.Zakljucak)}</div>`:""}${n.IzDiskusije?`<div class="sm mute" style="margin-top:5px"><i>${esc(n.IzDiskusije)}</i></div>`:""}<div class="agendaMeta">${processed?`<span class="chip">Obrađeno</span>`:`<span class="chip">Bez ishoda</span>`}${a?`<span class="chip">${a} ${a===1?"akcija":"akcije"}</span>`:""}${p?`<span class="chip">${p} ${p===1?"projekat":"projekta"}</span>`:""}${n.PrenesiDalje&&!transferred?`<span class="chip">Prenesi dalje</span>`:""}${transferred?`<span class="chip">Preneseno · ${esc(fmtDate(meetingById(n.PrenesenoNaSastanakID)?.Datum||""))}</span>`:""}${n.PrenosOdluka==="Ne prenosi"&&!processed?`<span class="chip">Nije preneseno</span>`:""}</div></div>`;
  };
- navOpen(`<div class="row between"><div><h2>${ser?esc(ser.Naziv):esc(m.Naslov||"Sastanak")}</h2><div class="sm mute">${esc(fmtDate(m.Datum))}${finished?" · Završen":""}</div></div><button class="btn" id="kdc">×</button></div>
+ navOpen(`<div class="row between"><div><h2>${ser?esc(seriesFullName(ser)):esc(m.Naslov||"Sastanak")}</h2><div class="sm mute">${esc(fmtDate(m.Datum))}${finished?" · Završen":""}</div></div><button class="btn" id="kdc">×</button></div>
   <div class="row" style="gap:14px;align-items:center;flex-wrap:wrap">
    ${ser?`<button class="seriesLink" id="openSeries">Prikaži seriju ›</button>`:""}
    ${m.Napomena?`<button class="seriesLink" id="openMeetingNote">Napomena ›</button>`:""}
@@ -3358,7 +3379,7 @@ function vUzivo(){
  $("#view").innerHTML=`<div class="live">
   <header class="liveHead">
    <button class="liveBack" id="liveBack">‹ Sastanak</button>
-   <div class="liveTitle"><b>${esc(ser?.Naziv||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</b><span>${esc(participantText(m.Ucesnici)||"Učesnici nijesu uneseni")}</span></div>
+   <div class="liveTitle"><b>${esc((ser?seriesFullName(ser):"")||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</b><span>${esc(participantText(m.Ucesnici)||"Učesnici nijesu uneseni")}</span></div>
    <button class="btn" id="liveMinutesBtn">Zapisnik</button>
    ${m.Status!=="Završen"?`<button class="btn pri" id="liveFinish">Završi sastanak</button>`:`<span class="chip">Sastanak je završen</span>`}
   </header>
@@ -3485,7 +3506,7 @@ function renderLiveMinutes(){
  const ser=m.SerijaID?seriesById(m.SerijaID):null,topics=liveTopics(m);
  box.innerHTML=`<div class="lmpHead"><span>Sažetak zapisnika</span><button class="linkBtn" id="liveMinutesFull">Puni zapisnik ›</button></div>
   <article class="lmpDoc">
-   <div class="lmpBrand"><img src="./logo-grawe-2021.png" alt="GRAWE"><span><b>ZAPISNIK</b>${esc(ser?.Naziv||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</span></div>
+   <div class="lmpBrand"><img src="./logo-grawe-2021.png" alt="GRAWE"><span><b>ZAPISNIK</b>${esc((ser?seriesFullName(ser):"")||m.Naslov||"Sastanak")} · ${esc(fmtDate(m.Datum))}</span></div>
    <div class="lmpMeta">Prisutni: ${esc(participantText(m.Ucesnici)||"—")}</div>
    ${topics.map((t,i)=>{
     const acts=agendaRelatedItems(t.ID).filter(y=>y.Tip==="Akcija"),c=t.Zakljucci||[];
@@ -3515,7 +3536,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-74").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-75").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
