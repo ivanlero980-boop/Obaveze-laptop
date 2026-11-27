@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-80"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-80"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-81"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-81"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -882,6 +882,9 @@ body.liveMode #view{max-width:none!important}
   .dashboardContent [data-dashboard-meeting]:not(.late) .rowDue{color:#3d4642}
   .dateDay{color:var(--ink)!important}
 }
+
+/* v81 */
+.adhocChip{background:#eef1f8!important;color:#3d4a6b!important}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -892,7 +895,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v80 · 27.11.2026.";
+const APP_VERSION="v81 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1468,7 +1471,7 @@ function vSastanci(onlyResults=false){
   const status=m.Status==="Završen"?"Završen":(m.Datum<today()?"Za završiti":"");
   return `<div class="card tight meetingCard" data-meeting="${m.ID}">
    <div class="row between"><div class="grow"><b>${meetingLabel(m)}</b>${!m.SerijaID&&m.Napomena?`<div class="sm mute">${esc(m.Napomena)}</div>`:""}</div><span>›</span></div>
-   <div class="meta" style="margin-top:7px">${status?`<span class="chip">${status}</span>`:""}<span class="chip">${allA.length} akcija</span>${a.length?`<span class="chip">${a.length} otvoreno</span>`:""}${late?`<span class="chip">${late} kasni</span>`:""}</div>
+   <div class="meta" style="margin-top:7px">${!m.SerijaID?`<span class="chip adhocChip">Ad hoc</span>`:""}${status?`<span class="chip">${status}</span>`:""}<span class="chip">${allA.length} akcija</span>${a.length?`<span class="chip">${a.length} otvoreno</span>`:""}${late?`<span class="chip">${late} kasni</span>`:""}</div>
   </div>`;
  };
  const filtered=all.filter(m=>inScope(m)&&matchesMeeting(m));
@@ -1479,11 +1482,15 @@ function vSastanci(onlyResults=false){
    const ms=seriesMeetings(s.ID),open=seriesOpenActions(s.ID),last=ms.slice().sort((a,b)=>(b.Datum||"").localeCompare(a.Datum||""))[0];
    return `<div class="card tight seriesCard" data-series-main="${s.ID}"><div class="row between"><div class="grow"><b>${esc(s.Naziv)}</b><div class="sm mute">Serija${last?` · posljednji ${esc(fmtDate(last.Datum))}`:" · bez termina"}</div><div class="sm mute" style="margin-top:4px">${ms.length} termina · ${open.length} otvorenih akcija</div></div><span>›</span></div></div>`;
   }).join("")||`<div class="empty">Još nema serija sastanaka.</div>`}</div>`;
+ // Hronološki, podijeljeno po vremenu (Danas / narednih 7 dana / kasnije; održani: ove nedjelje / ranije)
  const splitList=(arr,emptyTxt)=>{
-  if(!(desk&&selSeries==="all"))return `<div class="list">${arr.map(card).join("")||`<div class="empty">${emptyTxt}</div>`}</div>`;
-  const reg=arr.filter(m=>m.SerijaID),adh=arr.filter(m=>!m.SerijaID);
+  if(!desk)return `<div class="list">${arr.map(card).join("")||`<div class="empty">${emptyTxt}</div>`}</div>`;
   if(!arr.length)return `<div class="empty">${emptyTxt}</div>`;
-  return `${reg.length?`<div class="mtgBlockHead">Redovni sastanci <span>${reg.length}</span></div><div class="list">${reg.map(card).join("")}</div>`:""}${adh.length?`<div class="mtgBlockHead">Ad hoc <span>${adh.length}</span></div><div class="list">${adh.map(card).join("")}</div>`:""}`;
+  const isHeld=meetingsView.tab==="held";
+  const buckets=isHeld
+   ?[["Za završiti",m=>m.Status!=="Završen"],["Posljednjih 7 dana",m=>m.Status==="Završen"&&daysTo(m.Datum)>=-7],["Ranije",m=>m.Status==="Završen"&&daysTo(m.Datum)<-7]]
+   :[["Danas",m=>m.Datum===today()],["Narednih 7 dana",m=>daysTo(m.Datum)>=1&&daysTo(m.Datum)<=7],["Kasnije",m=>daysTo(m.Datum)>7]];
+  return buckets.map(([t,f])=>{const g=arr.filter(f);return g.length?`<div class="mtgBlockHead">${t} <span>${g.length}</span></div><div class="list">${g.map(card).join("")}</div>`:""}).join("");
  };
  const resultsHTML=meetingsView.tab==="upcoming"
     ?splitList(upcoming,"Nema predstojećih sastanaka.")
@@ -3695,7 +3702,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-80").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-81").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
