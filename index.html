@@ -1045,6 +1045,16 @@ body.liveMode #view{max-width:none!important}
   .navSub .mtgSerNew:hover{color:var(--green-deep)!important}
   .navSub .mtgSerDone summary{padding:6px 8px 6px 14px!important;font-size:12.5px!important;color:#8a948f}
 }
+@media (min-width:1024px){
+  nav{background:#e5eee8!important;border-right:1px solid #d2e0d7!important}
+  nav button.on .navIcon{color:var(--green)!important}
+  nav button:hover,.navSub .mtgSer:hover,.navSub .mtgGroup>summary:hover{background:#dde9e2!important}
+  nav button.on,.navSub .mtgSer.on{background:#ffffff!important;box-shadow:0 1px 2px rgba(16,40,26,.08),0 0 0 1px #d5e2da!important}
+  .navSub:not([hidden]),.navSub .mtgKids{border-left-color:#c9d9cf!important}
+  .navCount,.mtgWhen,.navSub .mtgSerHead,.navSub .mtgGroup>summary small{color:#62756a!important}
+  .mtgCnt{background:#d7e5dc!important}
+  .navIcon{color:#5b6f63!important}
+}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -1057,7 +1067,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span><span class="navCount" data-navcount="beleske"></span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v96 · 27.11.2026.";
+const APP_VERSION="v97 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -4225,7 +4235,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-96").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-97").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
