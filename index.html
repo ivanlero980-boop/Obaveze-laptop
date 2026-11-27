@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-68"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-68"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-69"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-69"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -638,8 +638,9 @@ nav button.on:after{
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v68 · 27.11.2026.";
-const KEY="obaveze_app_v1";
+const APP_VERSION="v69 · 27.11.2026.";
+const KEY="obaveze_laptop_v1";
+try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
 const $=q=>document.querySelector(q), esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const iso=d=>{const x=new Date(d),y=x.getFullYear(),m=String(x.getMonth()+1).padStart(2,"0"),da=String(x.getDate()).padStart(2,"0");return `${y}-${m}-${da}`}, today=()=>iso(new Date());
@@ -1043,7 +1044,7 @@ function vAkcije(){
  $("#view").querySelectorAll("[data-priority-filter]").forEach(b=>b.onclick=()=>{actionView.priority=b.dataset.priorityFilter;vAkcije()});
 }
 const noteView={importance:"all",priority:"all",search:""};
-function vBeleske(){
+function vBeleske(onlyResults=false){
  let ns=notes().filter(n=>n.Status!=="Arhivirana"&&n.Status!=="Završeno");
  if(noteView.importance!=="all")ns=ns.filter(n=>(n.Znacaj||"Operativno")===noteView.importance);
  if(noteView.priority!=="all")ns=ns.filter(n=>(n.Prioritet||"Normalan")===noteView.priority);
@@ -1052,6 +1053,13 @@ function vBeleske(){
   ns=ns.filter(n=>[n.Zadatak,n.Tekst,n.Napomena,n.Zakljucak,n.IzDiskusije].filter(Boolean).join(" ").toLowerCase().includes(q));
  }
  ns=ns.slice().sort((a,b)=>(b.ID||0)-(a.ID||0));
+ const noteListHTML=ns.map(n=>`<div class="card noteCard" data-note="${n.ID}"><div class="noteLead"><div class="secondaryIcon">${ICONS.note}</div><div class="grow"><div class="taskTitle">${esc(n.Zadatak)}</div><div class="meta"><span class="chip">${esc(n.Oblast||"Poslovno")}</span>${n.Znacaj==="Strateško"?`<span class="chip priority strategic">Strateško</span>`:""}${(n.Prioritet==="Visok"||n.Prioritet==="Nizak")?`<span class="chip">${esc(n.Prioritet)}</span>`:""}</div></div></div></div>`).join("")||`<div class="empty">Nema aktivnih beleški za izabrane filtere.</div>`;
+ if(onlyResults&&$("#noteResults")){
+  $("#noteResults").innerHTML=noteListHTML;
+  const sub=$("#view .top .sm");if(sub)sub.textContent=`${ns.length} aktivnih`;
+  $("#noteResults").querySelectorAll("[data-note]").forEach(c=>c.onclick=()=>noteDialog(Number(c.dataset.note)));
+  return;
+ }
  $("#view").innerHTML=head("Beleške",`${ns.length} aktivnih`)+`
  <div class="filterPanel"><div class="filterBar">
   <input id="noteSearch" class="search" placeholder="Pretraži beleške..." value="${esc(noteView.search)}">
@@ -1064,11 +1072,11 @@ function vBeleske(){
  <div class="tabs filterScroll">
   ${[["all","Sve"],["Visok","Visok"],["Normalan","Normalan"],["Nizak","Nizak"]].map(([v,l])=>`<button class="btn ${noteView.priority===v?"on":""}" data-note-priority="${v}">${l}</button>`).join("")}
  </div></div></div>
- <div class="list" style="margin-top:12px">${ns.map(n=>`<div class="card noteCard" data-note="${n.ID}"><div class="noteLead"><div class="secondaryIcon">${ICONS.note}</div><div class="grow"><div class="taskTitle">${esc(n.Zadatak)}</div><div class="meta"><span class="chip">${esc(n.Oblast||"Poslovno")}</span>${n.Znacaj==="Strateško"?`<span class="chip priority strategic">Strateško</span>`:""}${(n.Prioritet==="Visok"||n.Prioritet==="Nizak")?`<span class="chip">${esc(n.Prioritet)}</span>`:""}</div></div></div></div>`).join("")||`<div class="empty">Nema aktivnih beleški za izabrane filtere.</div>`}</div>`;
+ <div class="list" style="margin-top:12px" id="noteResults">${noteListHTML}</div>`;
  $("#view").querySelectorAll("[data-note]").forEach(c=>c.onclick=()=>noteDialog(Number(c.dataset.note)));
  $("#view").querySelectorAll("[data-note-importance]").forEach(b=>b.onclick=()=>{noteView.importance=b.dataset.noteImportance;vBeleske()});
  $("#view").querySelectorAll("[data-note-priority]").forEach(b=>b.onclick=()=>{noteView.priority=b.dataset.notePriority;vBeleske()});
- $("#noteSearch").oninput=e=>{noteView.search=e.target.value;clearTimeout(vBeleske._searchTimer);vBeleske._searchTimer=setTimeout(()=>vBeleske(),180)};
+ $("#noteSearch").oninput=e=>{noteView.search=e.target.value;vBeleske(true)};
 }
 function vProjekti(){
  const ps=projectSeries().slice().sort((a,b)=>daysTo(a.Rok)-daysTo(b.Rok)||(a.Naziv||"").localeCompare(b.Naziv||""));
@@ -1119,7 +1127,7 @@ function meetingsDialog(){
  route="sastanci";
  render();
 }
-function vSastanci(){
+function vSastanci(onlyResults=false){
  const all=(S.meetings||[]).slice();
  const q=(meetingsView.search||"").trim().toLocaleLowerCase();
  const matchesMeeting=m=>{
@@ -1143,15 +1151,29 @@ function vSastanci(){
    const ms=seriesMeetings(s.ID),open=seriesOpenActions(s.ID),last=ms.slice().sort((a,b)=>(b.Datum||"").localeCompare(a.Datum||""))[0];
    return `<div class="card tight seriesCard" data-series-main="${s.ID}"><div class="row between"><div class="grow"><b>${esc(s.Naziv)}</b><div class="sm mute">${esc(s.Tip||"Redovna")}${s.Tip==="Projektna"&&s.Rok?` · rok ${esc(fmtDate(s.Rok))}`:""}${last?` · posljednji ${esc(fmtDate(last.Datum))}`:" · bez termina"}</div><div class="sm mute" style="margin-top:4px">${ms.length} termina · ${open.length} otvorenih akcija</div></div><span>›</span></div></div>`;
   }).join("")||`<div class="empty">Još nema serija sastanaka.</div>`}</div>`;
+ const resultsHTML=meetingsView.tab==="upcoming"
+    ?`<div class="list">${upcoming.map(card).join("")||`<div class="empty">Nema predstojećih sastanaka.</div>`}</div>`
+    :meetingsView.tab==="held"
+     ?`<div class="list">${held.map(card).join("")||`<div class="empty">Nema održanih sastanaka.</div>`}</div>`
+     :seriesHTML;
+ const tabsHTML=`<button class="btn ${meetingsView.tab==="upcoming"?"on":""}" data-meeting-tab="upcoming">Predstojeći <span class="countBadge">${upcoming.length}</span></button>
+   <button class="btn ${meetingsView.tab==="held"?"on":""}" data-meeting-tab="held">Održani <span class="countBadge">${held.length}</span></button>
+   <button class="btn ${meetingsView.tab==="series"?"on":""}" data-meeting-tab="series">Serije <span class="countBadge">${(S.meetingSeries||[]).length}</span></button>`;
+ const bindResults=()=>{
+  $("#view").querySelectorAll("[data-meeting-tab]").forEach(b=>b.onclick=()=>{meetingsView.tab=b.dataset.meetingTab;meetingsView.search="";vSastanci()});
+  $("#view").querySelectorAll("[data-meeting]").forEach(b=>b.onclick=()=>meetingDialog(Number(b.dataset.meeting)));
+  $("#view").querySelectorAll("[data-series-main]").forEach(b=>b.onclick=()=>seriesDialog(Number(b.dataset.seriesMain),{fromMeetingsTab:true}));
+ };
+ if(onlyResults&&$("#meetingResults")){$("#meetingTabs").innerHTML=tabsHTML;$("#meetingResults").innerHTML=resultsHTML;bindResults();return}
  $("#view").innerHTML=head("Sastanci",`${all.length} sačuvanih`)+`
   <div class="btnrow" style="margin-bottom:10px"><button class="btn pri grow" id="newMeetingMain">+ Novi sastanak</button>${meetingsView.tab==="series"?`<button class="btn grow" id="newSeriesMain">+ Nova serija</button>`:""}</div>
-  <div class="tabs">
+  <div class="tabs" id="meetingTabs">
    <button class="btn ${meetingsView.tab==="upcoming"?"on":""}" data-meeting-tab="upcoming">Predstojeći <span class="countBadge">${upcoming.length}</span></button>
    <button class="btn ${meetingsView.tab==="held"?"on":""}" data-meeting-tab="held">Održani <span class="countBadge">${held.length}</span></button>
    <button class="btn ${meetingsView.tab==="series"?"on":""}" data-meeting-tab="series">Serije <span class="countBadge">${(S.meetingSeries||[]).length}</span></button>
   </div>
   <label class="actionSearch"><span aria-hidden="true">⌕</span><input id="meetingSearchMain" type="search" placeholder="${meetingsView.tab==="series"?"Pretraži serije":"Pretraži sastanke"}" value="${esc(meetingsView.search)}"></label>
-  <div style="margin-top:12px">${
+  <div style="margin-top:12px" id="meetingResults">${
    meetingsView.tab==="upcoming"
     ?`<div class="list">${upcoming.map(card).join("")||`<div class="empty">Nema predstojećih sastanaka.</div>`}</div>`
     :meetingsView.tab==="held"
@@ -1160,10 +1182,8 @@ function vSastanci(){
   }</div>`;
  $("#newMeetingMain").onclick=()=>editMeeting();
  if($("#newSeriesMain"))$("#newSeriesMain").onclick=()=>editSeries(null,false);
- $("#meetingSearchMain").oninput=e=>{meetingsView.search=e.target.value;vSastanci()};
- $("#view").querySelectorAll("[data-meeting-tab]").forEach(b=>b.onclick=()=>{meetingsView.tab=b.dataset.meetingTab;meetingsView.search="";vSastanci()});
- $("#view").querySelectorAll("[data-meeting]").forEach(b=>b.onclick=()=>meetingDialog(Number(b.dataset.meeting)));
- $("#view").querySelectorAll("[data-series-main]").forEach(b=>b.onclick=()=>seriesDialog(Number(b.dataset.seriesMain),{fromMeetingsTab:true}));
+ $("#meetingSearchMain").oninput=e=>{meetingsView.search=e.target.value;vSastanci(true)};
+ bindResults();
 }
 function seriesListDialog(selectMode=false){
  const ss=(S.meetingSeries||[]).slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
@@ -1944,7 +1964,7 @@ function finishMeetingDialog(meetingId){
   <div class="btnrow" style="margin-top:16px"><button class="btn pri grow" id="finishMeetingYes">Završi sastanak</button><button class="btn grow" id="finishMeetingCancel">Otkaži</button></div>`,`finishMeeting:${meetingId}`,{dedupe:false});
  $("#finishMeetingClose").onclick=navBack;$("#finishMeetingCancel").onclick=navBack;
  $("#finishMeetingYes").onclick=()=>{
-  candidates.forEach(n=>{const wasProcessed=agendaProcessed(n),cb=$(`[data-finish-carry="${n.ID}"]`);n.PrenesiDalje=!!cb?.checked;if(!wasProcessed){n.PrenosOdluka=n.PrenesiDalje?"Prenesi":"Ne prenosi";if(!n.PrenesiDalje)n.Obradjeno=true;}});
+  candidates.forEach(n=>{const wasProcessed=agendaProcessed(n),cb=$(`[data-finish-carry="${n.ID}"]`);n.PrenesiDalje=!!cb?.checked;if(!wasProcessed){n.PrenosOdluka=n.PrenesiDalje?"Prenesi":"Ne prenosi";}});
   m.Status="Završen";m.ZavrsenDatum=today();save();norm();render();navBack({type:"changed",kind:"meeting",id:meetingId});
  };
 }
@@ -1975,7 +1995,12 @@ function editMeeting(m=null,forceNew=false,options={}){
    dedupe:false,
    onResume:result=>{
     if(result?.type==="series-selected"&&$("#kmSeries")){
-     $("#kmSeries").value=String(result.id);
+     const sel=$("#kmSeries");
+     if(![...sel.options].some(o=>o.value===String(result.id))){
+      const fresh=(S.meetingSeries||[]).filter(s=>s.Status!=="Završen"||Number(s.ID)===Number(result.id)).slice().sort((a,b)=>(a.Naziv||"").localeCompare(b.Naziv||""));
+      sel.innerHTML=`<option value="">Bez serije — ad hoc</option>`+fresh.map(s=>`<option value="${s.ID}">${esc(s.Naziv)}${s.Tip==="Projektna"?" · Projekat":""}</option>`).join("");
+     }
+     sel.value=String(result.id);
      const ss=seriesById(result.id);
      if(ss?.Sistem&&$("#kmSystem"))$("#kmSystem").value=ss.Sistem;
      if(ss&&!(($("#kmParticipants").value||"").trim())&&(ss.Ucesnici||[]).length)$("#kmParticipants").value=ss.Ucesnici.join("\n");
@@ -2166,6 +2191,7 @@ function navRestoreFrame(frame){
  (frame.nodes||[]).forEach(n=>body.appendChild(n));
  body.scrollTop=frame.scrollTop||0;
  frame.nodes=null;
+ dlgDirty=!!frame.dirty;
  dialogNavCurrent=frame;
  const d=$("#dlg");if(d&&!d.open)d.showModal();
 }
@@ -2190,17 +2216,19 @@ function navOpen(html,key=null,options={}){
   return;
  }
  if(dialogNavCurrent){
+  dialogNavCurrent.dirty=dlgDirty;
   dialogNavCurrent.nodes=navTakeCurrentNodes();
   dialogNavCurrent.scrollTop=body.scrollTop||0;
   dialogNavStack.push(dialogNavCurrent);
  }
  body.innerHTML=html;
+ dlgDirty=false;
  dialogNavCurrent={key,refresh:options.refresh||null,onResume:options.onResume||null,nodes:null,scrollTop:0};
  if(!d.open)d.showModal();
 }
 function navReplace(html,key=null,options={}){
  const body=$("#dlgBody"),d=$("#dlg");if(!body||!d)return;
- body.innerHTML=html;
+ body.innerHTML=html;dlgDirty=false;
  dialogNavCurrent={key:key||dialogNavCurrent?.key||`anon:${++dialogNavSeq}`,refresh:options.refresh||dialogNavCurrent?.refresh||null,onResume:options.onResume||dialogNavCurrent?.onResume||null,nodes:null,scrollTop:0};
  if(!d.open)d.showModal();
 }
@@ -2220,8 +2248,16 @@ function navBack(result=null){
  if(d?.open)d.close();
  return false;
 }
+let dlgDirty=false;
+function dismissDlg(){
+ // × u panelu ima svoju logiku (tema se tu čuva) — koristi se uvijek kad postoji.
+ const x=[...$("#dlgBody").querySelectorAll("button")].find(b=>b.textContent.trim()==="×");
+ if(x){x.click();return}
+ if(dlgDirty&&!confirm("Unos nije sačuvan. Zatvoriti bez čuvanja?"))return;
+ navBack();
+}
 function closeDlg(){
- dialogNavStack.length=0;dialogNavCurrent=null;
+ dialogNavStack.length=0;dialogNavCurrent=null;dlgDirty=false;
  const d=$("#dlg");if(d?.open)d.close();
 }
 function openDlg(html){navOpen(html)}
@@ -3006,7 +3042,7 @@ async function checkForUpdate(){
   $("#updLater").onclick=closeDlg;
   $("#updGo").onclick=async()=>{
    try{
-    if("caches" in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}
+    if("caches" in window){const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith("obaveze-laptop-")).map(k=>caches.delete(k)))}
     const reg=await navigator.serviceWorker?.getRegistration();
     if(reg)await reg.update();
    }catch(e){}
@@ -3027,7 +3063,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-68").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-69").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
@@ -3041,8 +3077,9 @@ if("serviceWorker" in navigator){
 if(isStandalone()){
  document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{route=b.dataset.nav;render()});
  $("#fab").onclick=()=>{if(route==="akcije")editItem(null,"Akcija");else if(route==="projekti")editSeries(null,false,{Tip:"Projektna"});else if(route==="sastanci")editMeeting();else if(route==="beleske")editItem(null,"Beleška");else quickAdd()};
- $("#dlg").addEventListener("click",e=>{if(e.target===$("#dlg"))closeDlg()});
- $("#dlg").addEventListener("cancel",e=>{e.preventDefault();const x=[...$("#dlgBody").querySelectorAll("button")].find(b=>b.textContent.trim()==="×");if(x)x.click();else navBack()});
+ $("#dlg").addEventListener("click",e=>{if(e.target===$("#dlg"))dismissDlg()});
+ $("#dlg").addEventListener("cancel",e=>{e.preventDefault();dismissDlg()});
+ $("#dlgBody").addEventListener("input",()=>{dlgDirty=true});
  $("#dlg").addEventListener("keydown",e=>{
   if(e.key!=="Enter"||!(e.ctrlKey||e.metaKey))return;
   const b=[...$("#dlgBody").querySelectorAll("button")].find(x=>/^Sačuvaj/.test(x.textContent.trim())&&x.offsetParent!==null&&!x.disabled);

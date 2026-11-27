@@ -1,4 +1,4 @@
-const CACHE_NAME = "obaveze-app-v20261127-68";
+const CACHE_NAME = "obaveze-laptop-v20261127-69";
 const CORE = [
   "./",
   "./index.html",
@@ -23,7 +23,8 @@ self.addEventListener("activate", event => {
       const keys = await caches.keys();
       await Promise.all(
         keys
-          .filter(key => key !== CACHE_NAME)
+          // Samo stare verzije ove (laptop) aplikacije; keš drugih aplikacija na istom domenu ostaje.
+          .filter(key => key.startsWith("obaveze-laptop-") && key !== CACHE_NAME)
           .map(key => caches.delete(key))
       );
       await self.clients.claim();
