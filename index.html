@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-77"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-77"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-78"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-78"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -776,6 +776,11 @@ body.liveMode #view{max-width:none!important}
 /* v77: potprojekti */
 .subProject{margin-left:28px;border-left:3px solid #cfe5d8}
 .subProjCard{cursor:pointer}
+
+/* v78: vidljiva veza teme sa projektom */
+.projTag{color:var(--green-deep);font-weight:700}
+.projChip{background:var(--green-soft)!important;border-color:#cfe5d8!important;color:var(--green-deep)!important;font-weight:650}
+.ltProj{display:block;color:var(--green-deep);font-weight:600;margin-top:1px}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
@@ -786,7 +791,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v77 · 27.11.2026.";
+const APP_VERSION="v78 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -2386,7 +2391,7 @@ function meetingDialog(id){
   const rel=agendaRelatedItems(n.ID),processed=agendaProcessed(n),transferred=!!n.PrenesenoNaSastanakID;
   const a=rel.filter(x=>x.Tip==="Akcija").length,p=rel.filter(x=>x.Tip==="Projekat").length;
   const cls=transferred?" agendaTransferred":(!processed?" agendaUnprocessed":"");
-  return `<div class="card tight${cls}" data-meeting-note="${n.ID}"><b>${esc(n.Zadatak)}</b>${n.Zakljucak?`<div class="agendaConclusion">${esc(n.Zakljucak)}</div>`:""}${n.IzDiskusije?`<div class="sm mute" style="margin-top:5px"><i>${esc(n.IzDiskusije)}</i></div>`:""}<div class="agendaMeta">${processed?`<span class="chip">Obrađeno</span>`:`<span class="chip">Bez ishoda</span>`}${a?`<span class="chip">${a} ${a===1?"akcija":"akcije"}</span>`:""}${p?`<span class="chip">${p} ${p===1?"projekat":"projekta"}</span>`:""}${n.PrenesiDalje&&!transferred?`<span class="chip">Prenesi dalje</span>`:""}${transferred?`<span class="chip">Preneseno · ${esc(fmtDate(meetingById(n.PrenesenoNaSastanakID)?.Datum||""))}</span>`:""}${n.PrenosOdluka==="Ne prenosi"&&!processed?`<span class="chip">Nije preneseno</span>`:""}</div></div>`;
+  return `<div class="card tight${cls}" data-meeting-note="${n.ID}"><b>${esc(n.Zadatak)}</b>${n.Zakljucak?`<div class="agendaConclusion">${esc(n.Zakljucak)}</div>`:""}${n.IzDiskusije?`<div class="sm mute" style="margin-top:5px"><i>${esc(n.IzDiskusije)}</i></div>`:""}<div class="agendaMeta">${processed?`<span class="chip">Obrađeno</span>`:`<span class="chip">Bez ishoda</span>`}${a?`<span class="chip">${a} ${a===1?"akcija":"akcije"}</span>`:""}${n.PovezaniProjekatID&&projectById(n.PovezaniProjekatID)?`<span class="chip projChip">${esc(projectLabel(projectById(n.PovezaniProjekatID)))}</span>`:p?`<span class="chip">${p} ${p===1?"projekat":"projekta"}</span>`:""}${n.PrenesiDalje&&!transferred?`<span class="chip">Prenesi dalje</span>`:""}${transferred?`<span class="chip">Preneseno · ${esc(fmtDate(meetingById(n.PrenesenoNaSastanakID)?.Datum||""))}</span>`:""}${n.PrenosOdluka==="Ne prenosi"&&!processed?`<span class="chip">Nije preneseno</span>`:""}</div></div>`;
  };
  navOpen(`<div class="row between"><div><h2>${ser?esc(seriesFullName(ser)):esc(m.Naslov||"Sastanak")}</h2><div class="sm mute">${esc(fmtDate(m.Datum))}${finished?" · Završen":""}</div></div><button class="btn" id="kdc">×</button></div>
   <div class="row" style="gap:14px;align-items:center;flex-wrap:wrap">
@@ -2915,14 +2920,14 @@ function noteDialog(id){
  const wsTopics=wsMeeting?meetingItems(wsMeeting.ID).filter(x=>x.Tip==="Beleška"&&x.AgendaStavka&&x.Status!=="Arhivirana").sort((a,b)=>(a.ID||0)-(b.ID||0)):[];
  const wsSer=wsMeeting&&wsMeeting.SerijaID?seriesById(wsMeeting.SerijaID):null;
  const wsAside=wsMeeting?`<aside class="topicNav"><button class="topicNavBack" id="topicNavBack">‹ ${esc(wsSer?.Naziv||wsMeeting.Naslov||"Sastanak")}</button><div class="sm mute" style="margin:2px 0 10px">${esc(fmtDate(wsMeeting.Datum))} · ${wsTopics.length} ${wsTopics.length===1?"tema":"teme"}</div>${wsTopics.map((t,i)=>{const tr=!!t.PrenesenoNaSastanakID,pr=agendaProcessed(t);return `<button class="topicNavItem${t.ID===n.ID?" on":""}${tr?" transferred":(!pr?" open":"")}" data-topic-nav="${t.ID}"><span class="topicNavNum">${i+1}</span><span class="topicNavText">${esc(t.Zadatak)}<small>${tr?"Preneseno":pr?"Obrađeno":"Bez ishoda"}</small></span></button>`}).join("")}<button class="btn topicNavAdd" id="topicNavAdd">+ Tema</button></aside>`:"";
- navOpen(`${wsAside?`<div class="topicWorkspace">${wsAside}<div class="topicMain">`:""}<div class="row between"><div><h2>${esc(n.Zadatak)}</h2><div class="sm mute">Tema sastanka</div></div><button class="btn" id="noteClose">×</button></div>
+ navOpen(`${wsAside?`<div class="topicWorkspace">${wsAside}<div class="topicMain">`:""}<div class="row between"><div><h2>${esc(n.Zadatak)}</h2><div class="sm mute">Tema sastanka${n.PovezaniProjekatID&&projectById(n.PovezaniProjekatID)?` · <span class="projTag">Projekat: ${esc(projectLabel(projectById(n.PovezaniProjekatID)))}</span>`:""}</div></div><button class="btn" id="noteClose">×</button></div>
   <div class="row" style="gap:8px"><label class="f grow"><span class="sm mute">Tip značaja</span><select id="topicImportance"><option value="Operativno" ${(n.Znacaj||"Operativno")==="Operativno"?"selected":""}>Operativno</option><option value="Strateško" ${n.Znacaj==="Strateško"?"selected":""}>Strateško</option></select></label><label class="f grow"><span class="sm mute">Prioritet</span><select id="topicPriority">${["Visok","Normalan","Nizak"].map(v=>`<option value="${v}" ${(n.Prioritet||"Normalan")===v?"selected":""}>${v}</option>`).join("")}</select></label></div>
   <div class="topicField"><div class="topicFieldLabel">Zaključci</div>
    <div id="topicConclusions">${(n.Zakljucci||[]).map((c,k)=>{const ca=S.items.filter(a=>a.Tip==="Akcija"&&Number(a.ZakljucakID)===Number(c.ID));return `<div class="conclRow" data-cid="${c.ID}"><span class="conclNo">${k+1}</span><textarea class="conclText" rows="2">${esc(c.Tekst)}</textarea><div class="conclTools"><button type="button" class="conclAct" data-cact="${c.ID}">+ akcija</button><button type="button" class="conclDel" data-cdel="${c.ID}" aria-label="Ukloni zaključak ${k+1}">Ukloni</button></div>${ca.length?`<div class="conclActions">${ca.map(a=>`<div class="conclAction" data-item="${a.ID}">↳ ${esc(a.Zadatak)} <span>${esc([a.Odgovoran,a.Rok?fmtDate(a.Rok):"",a.Status==="Završeno"?"završeno":""].filter(Boolean).join(" · "))}</span></div>`).join("")}</div>`:""}</div>`}).join("")}</div>
    <input id="topicConclusionNew" class="conclNew" placeholder="${(n.Zakljucci||[]).length?"Sljedeći zaključak — Enter":"Šta je odlučeno? — Enter dodaje zaključak"}">
   </div>
   <details class="topicField" ${n.IzDiskusije?"open":""}><summary class="btn">+ Iz diskusije</summary><div style="margin-top:8px"><textarea id="topicDiscussion" class="topicDiscussion" placeholder="Važan kontekst iz razgovora koji nije ni zaključak ni zadatak">${esc(n.IzDiskusije||"")}</textarea></div></details>
-  <div class="topicActions"><button class="btn pri" id="topicAction">+ Akcija</button><button class="btn" id="topicProject">Projekat</button></div>
+  <div class="topicActions"><button class="btn pri" id="topicAction">+ Akcija</button><button class="btn" id="topicProject">${n.PovezaniProjekatID&&projectById(n.PovezaniProjekatID)?`Projekat: ${esc(projectLabel(projectById(n.PovezaniProjekatID)))}`:"Poveži projekat"}</button></div>
   ${relActions.length||relProjects.length?`<div class="agendaMeta">${relActions.length?`<span class="chip">${relActions.length} ${relActions.length===1?"akcija":"akcije"}</span>`:""}${relProjects.length?`<span class="chip">${relProjects.length} ${relProjects.length===1?"projekat":"projekta"}</span>`:""}</div>`:""}
   <label class="card tight topicToggle"><input type="checkbox" id="topicCarry" ${n.PrenesiDalje?"checked":""} ${transferred?"disabled":""}><span><b>${transferred?"Tema je prenesena":"Prenesi temu na sljedeći sastanak"}</b><div class="sm mute">Nezavisno od zaključka i akcija.${transferred?` Preneseno ${esc(fmtDate(meetingById(n.PrenesenoNaSastanakID)?.Datum||""))}.`:""}</div></span></label>
   <label class="card tight topicToggle"><input type="checkbox" id="topicProcessed" ${(n.Obradjeno&&!((n.IzDiskusije||"").trim()||(n.Zakljucak||"").trim()||related.length))?"checked":""}><span><b>Obrađeno</b><div class="sm mute">Označi samo kada je tema razmotrena bez posebnog zaključka, diskusije, akcije ili projekta.</div></span></label>
@@ -3442,7 +3447,7 @@ function renderLiveAgenda(){
  const pct=topics.length?Math.round(done/topics.length*100):0;
  box.innerHTML=`<div class="laHead"><span>Agenda</span><span>${done} od ${topics.length} obrađeno</span></div>
   <div class="laProg"><i style="width:${pct}%"></i></div>
-  ${topics.map((t,i)=>{const cur=t.ID===liveView.topicId,cls=t.PrenesenoNaSastanakID?"tr":agendaProcessed(t)?"done":"open";return `<button class="liveTopic ${cls}${cur?" on":""}" data-live-topic="${t.ID}"><span class="ltNum">${i+1}</span><span class="ltText">${esc(t.Zadatak)}<small>${esc(liveTopicStatus(t,cur))}${liveDraftHas(t.ID)?` <em class="ltDraft">· nacrt</em>`:""}</small></span></button>`}).join("")||`<div class="sm mute" style="padding:8px 2px">Agenda je prazna.</div>`}
+  ${topics.map((t,i)=>{const cur=t.ID===liveView.topicId,cls=t.PrenesenoNaSastanakID?"tr":agendaProcessed(t)?"done":"open";return `<button class="liveTopic ${cls}${cur?" on":""}" data-live-topic="${t.ID}"><span class="ltNum">${i+1}</span><span class="ltText">${esc(t.Zadatak)}<small>${esc(liveTopicStatus(t,cur))}${liveDraftHas(t.ID)?` <em class="ltDraft">· nacrt</em>`:""}${t.PovezaniProjekatID&&projectById(t.PovezaniProjekatID)?`<span class="ltProj">${esc(projectLabel(projectById(t.PovezaniProjekatID)))}</span>`:""}</small></span></button>`}).join("")||`<div class="sm mute" style="padding:8px 2px">Agenda je prazna.</div>`}
   ${m.Status!=="Završen"?`<input id="liveNewTopic" class="liveNewTopic" placeholder="+ Nova tema — Enter">`:""}`;
  box.querySelectorAll("[data-live-topic]").forEach(b=>b.onclick=()=>liveSelectTopic(Number(b.dataset.liveTopic)));
  const nt=$("#liveNewTopic");
@@ -3577,7 +3582,7 @@ function bindCards(root=document){
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-77").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-78").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
