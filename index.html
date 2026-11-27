@@ -953,7 +953,7 @@ body.liveMode #view{max-width:none!important}
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v82 · 27.11.2026.";
+const APP_VERSION="v83 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -3769,10 +3769,11 @@ const WK_DAYS=["ned","pon","uto","sri","čet","pet","sub"];
 function wkShort(isoDate){const d=new Date(isoDate+"T00:00:00");return `${WK_DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`}
 function wkDefaultDue(start){const fri=wkAdd(start,4);return fri<today()?today():fri}
 function wkIsMine(x){return (x.Odgovoran||"")==="Ivan"}
+function wkPinned(x,st,end){return !!(x.UNedjelji&&x.UNedjelji<=st&&x.Rok&&x.Rok>end)}
 function wkData(start){
  const end=wkAdd(start,6);
  const open=activeActions();
- const mineOpen=open.filter(x=>wkIsMine(x)&&((x.Rok&&x.Rok<=end)||x.UNedjelji===start)).sort(attentionSort);
+ const mineOpen=open.filter(x=>wkIsMine(x)&&((x.Rok&&x.Rok<=end)||(x.UNedjelji&&x.UNedjelji<=start))).sort(attentionSort);
  const mineDone=S.items.filter(x=>x.Tip==="Akcija"&&wkIsMine(x)&&x.Status==="Završeno"&&x.ZavrsenDatum>=start&&x.ZavrsenDatum<=end);
  const deleg=open.filter(x=>!wkIsMine(x)&&x.Rok&&x.Rok<=end).sort(attentionSort);
  const meetings=(S.meetings||[]).filter(m=>m.Status!=="Završen"&&m.Datum>=start&&m.Datum<=end).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""));
@@ -3786,8 +3787,8 @@ function vNedjelja(){
  const st=weekView.start,d=wkData(st),cur=st===wkMonday(today());
  const closed=(S.weekLog||{})[st];
  const due=x=>{if(!x.Rok)return "";const k=daysTo(x.Rok);return k<0?`<span class="wkDue late">Kasni ${Math.abs(k)} d</span>`:k===0?`<span class="wkDue soon">Danas</span>`:`<span class="wkDue">${esc(wkShort(x.Rok))}</span>`};
- const meta=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null,p=x.ProjekatID?projectById(x.ProjekatID):null;return [x.Znacaj==="Strateško"?"Strateško":"",m?meetingLabel(m):"",p?projectLabel(p):"",x.UNedjelji===st&&x.Rok>d.end?`uzeto u ovu nedjelju · rok ${fmtDate(x.Rok)}`:"",x.PrenosBroj?`preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · ")};
- const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span>${x.UNedjelji===st&&x.Rok>d.end?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
+ const meta=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null,p=x.ProjekatID?projectById(x.ProjekatID):null;return [x.Znacaj==="Strateško"?"Strateško":"",m?meetingLabel(m):"",p?projectLabel(p):"",wkPinned(x,st,d.end)?(x.UNedjelji<st?`ostalo iz nedjelje ${wkLabel(x.UNedjelji)} · rok ${fmtDate(x.Rok)}`:`uzeto u ovu nedjelju · rok ${fmtDate(x.Rok)}`):"",x.PrenosBroj?`preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · ")};
+ const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span>${wkPinned(x,st,d.end)?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
  const doneRow=x=>`<div class="wkRow done" data-wk-item="${x.ID}"><span class="wkCheck on" aria-hidden="true">✓</span><span class="wkText"><b>${esc(x.Zadatak)}</b><small>${x.Otkazano?"otkazano":"završeno"} ${esc(wkShort(x.ZavrsenDatum))}</small></span></div>`;
  const delegRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span><span class="wkWho">${esc(x.Odgovoran||"")}</span>${due(x)}</div>`;
  const people=[...new Set(S.people||[])].filter(p=>p!=="Ivan");
@@ -3856,7 +3857,7 @@ function vNedjelja(){
 }
 function weekPickDialog(st){
  const end=wkAdd(st,6);
- const later=activeActions().filter(x=>wkIsMine(x)&&x.Rok&&x.Rok>end&&x.UNedjelji!==st).sort((a,b)=>(a.Rok||"").localeCompare(b.Rok||""));
+ const later=activeActions().filter(x=>wkIsMine(x)&&x.Rok&&x.Rok>end&&!(x.UNedjelji&&x.UNedjelji<=st)).sort((a,b)=>(a.Rok||"").localeCompare(b.Rok||""));
  navOpen(`<div class="row between"><div><h2>Uzmi u ovu nedjelju</h2><div class="sm mute">${esc(wkLabel(st))} · rok obaveze se ne mijenja</div></div><button class="btn" id="wpClose">×</button></div>
   <div class="list" style="margin-top:12px">${later.map(x=>`<div class="card tight"><div class="row between"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">rok ${esc(fmtDate(x.Rok))}</div></div><button class="btn" data-wp-pin="${x.ID}">Uzmi</button></div></div>`).join("")||`<div class="empty">Nema tvojih obaveza sa kasnijim rokom.</div>`}</div>`,`weekPick:${st}`,{dedupe:false});
  $("#wpClose").onclick=navBack;
@@ -3870,7 +3871,7 @@ function weekCloseDialog(st){
   navOpen(`<div class="row between"><div><h2>Zatvori nedjelju ${esc(wkLabel(st))}</h2><div class="sm mute">Za svaku otvorenu obavezu odluči: završeno, prenesi ili otkaži. Stavke bez odluke ostaju kako jesu.</div></div><button class="btn" id="wcClose">×</button></div>
    <div class="wkSummary"><div><b class="g">${d.mineDone.length+n("done")}</b><span>završeno</span></div><div><b>${n("carry")}</b><span>prenosi se (${esc(wkLabel(nextSt))})</span></div><div><b>${d.mineOpen.length-Object.values(dec).filter(Boolean).length}</b><span>bez odluke</span></div><div><b class="r">${d.deleg.filter(x=>daysTo(x.Rok)<0).length}</b><span>delegirano kasni</span></div></div>
    <div class="wkHead2">Moje otvorene obaveze</div>
-   <div class="list">${d.mineOpen.map(x=>{const pinned=x.UNedjelji===st&&x.Rok>d.end;const target=pinned?"sljedeću nedjelju":wkShort(nextFri);return `<div class="card tight wcRow"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">${esc([x.Rok?(daysTo(x.Rok)<0?`kasni ${Math.abs(daysTo(x.Rok))} d`:`rok ${fmtDate(x.Rok)}`):"",pinned?"ručno uzeto · rok ostaje":"",x.PrenosBroj?`već preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · "))}</div></div><div class="wcBtns"><button class="${dec[x.ID]==="done"?"on g":""}" data-wc="${x.ID}:done">Završeno</button><button class="${dec[x.ID]==="carry"?"on b":""}" data-wc="${x.ID}:carry">Prenesi → ${esc(target)}</button><button class="${dec[x.ID]==="cancel"?"on m":""}" data-wc="${x.ID}:cancel">Otkaži</button></div></div>`}).join("")||`<div class="empty">Nema otvorenih obaveza u ovoj nedjelji.</div>`}</div>
+   <div class="list">${d.mineOpen.map(x=>{const pinned=wkPinned(x,st,d.end);const target=pinned?"sljedeću nedjelju":wkShort(nextFri);return `<div class="card tight wcRow"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">${esc([x.Rok?(daysTo(x.Rok)<0?`kasni ${Math.abs(daysTo(x.Rok))} d`:`rok ${fmtDate(x.Rok)}`):"",pinned?"ručno uzeto · rok ostaje":"",x.PrenosBroj?`već preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · "))}</div></div><div class="wcBtns"><button class="${dec[x.ID]==="done"?"on g":""}" data-wc="${x.ID}:done">Završeno</button><button class="${dec[x.ID]==="carry"?"on b":""}" data-wc="${x.ID}:carry">Prenesi → ${esc(target)}</button><button class="${dec[x.ID]==="cancel"?"on m":""}" data-wc="${x.ID}:cancel">Otkaži</button></div></div>`}).join("")||`<div class="empty">Nema otvorenih obaveza u ovoj nedjelji.</div>`}</div>
    ${d.deleg.length?`<div class="wkHead2">Delegirano <span>rok je dogovoren — ostaje za follow-up, ne pomjera se</span></div><div class="list">${d.deleg.map(x=>`<div class="card tight"><div class="row between"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">${esc(x.Odgovoran||"")}</div></div><span class="${daysTo(x.Rok)<0?"wkDue late":"wkDue"}">${daysTo(x.Rok)<0?`Kasni ${Math.abs(daysTo(x.Rok))} d`:esc(wkShort(x.Rok))}</span></div></div>`).join("")}</div>`:""}
    <div class="btnrow" style="margin-top:16px;justify-content:flex-end"><button class="btn" id="wcReport">Izvještaj nedjelje (PDF)</button><button class="btn pri" id="wcApply">Zatvori nedjelju</button></div>`,`weekClose:${st}`,{dedupe:true});
   $("#wcClose").onclick=navBack;
@@ -3882,7 +3883,7 @@ function weekCloseDialog(st){
     if(v==="done"){x.Status="Završeno";x.ZavrsenDatum=today();log.done.push(x.ID)}
     else if(v==="cancel"){x.Status="Završeno";x.ZavrsenDatum=today();x.Otkazano=true;x.ZavrsniKomentar=x.ZavrsniKomentar||"Otkazano pri zatvaranju nedjelje";log.cancelled.push(x.ID)}
     else if(v==="carry"){
-     const pinned=x.UNedjelji===st&&x.Rok>d.end;
+     const pinned=wkPinned(x,st,d.end);
      if(pinned){x.UNedjelji=nextSt}
      else{if(!Array.isArray(x.RokIstorija))x.RokIstorija=[];x.RokIstorija.push({Od:x.Rok||"",Do:nextFri,Datum:today(),Razlog:`Preneseno pri zatvaranju nedjelje ${wkLabel(st)}`});x.Rok=nextFri;if(x.UNedjelji)delete x.UNedjelji}
      x.PrenosBroj=(Number(x.PrenosBroj)||0)+1;log.carried.push(x.ID);
