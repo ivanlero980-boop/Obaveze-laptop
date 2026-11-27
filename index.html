@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-81"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-81"><title>Obaveze</title>
+<meta name="theme-color" content="#007a3d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Obaveze"><link rel="manifest" href="manifest.json?v=20261127-82"><link rel="apple-touch-icon" href="icon-192.png?v=20261127-82"><title>Obaveze</title>
 <style>
 :root{
   --bg:#f5f7f6;
@@ -272,7 +272,7 @@ nav{
   border-top:1px solid var(--line);backdrop-filter:blur(16px);
   display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:19;
 }
-nav .inner{width:min(720px,100%);display:grid;grid-template-columns:repeat(5,1fr)}
+nav .inner{width:min(720px,100%);display:grid;grid-template-columns:repeat(6,1fr)}
 nav button{
   min-height:72px;background:none;border:0;color:#7f8983;padding:9px 2px 7px;
   font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
@@ -885,17 +885,75 @@ body.liveMode #view{max-width:none!important}
 
 /* v81 */
 .adhocChip{background:#eef1f8!important;color:#3d4a6b!important}
+
+/* ===== v82: Moja nedjelja ===== */
+.wkNav{display:flex;gap:6px;margin-left:auto}
+.wkNav .btn{padding:8px 12px!important;background:#fff!important;color:var(--ink)!important;border:1px solid #dfe3e1!important;font-weight:500!important;font-size:13.5px}
+.wkNav .btn:disabled{opacity:.5}
+.top .wkCloseBtn{background:#fff!important;color:var(--green-deep)!important;border:1px solid var(--green)!important}
+.top{gap:12px;flex-wrap:wrap}
+.wkQuick{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:18px}
+.wkQuickRow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.wkQuickRow #wkInput{flex:1 1 320px;min-width:0;font-size:14.5px;padding:10px 12px;border-radius:8px}
+.wkSeg{display:flex;background:#eceeed;border-radius:8px;padding:3px}
+.wkSeg button{border:0;background:transparent;border-radius:6px;padding:6px 12px;font-size:13px;color:var(--mute)}
+.wkSeg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.wkQuickExtra{margin-top:8px;font-size:13px;color:var(--mute)}
+.wkQuickExtra label{display:flex;align-items:center;gap:6px}
+.wkQuickExtra input,.wkQuickExtra select{width:auto;padding:6px 8px;font-size:13px;border-radius:6px}
+.wkGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.wkPanel{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wkHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 18px 10px}
+.wkHead h2{font-size:15px;font-weight:700}
+.wkHead span{font-size:12.5px;color:var(--mute)}
+.wkRow{display:flex;align-items:center;gap:12px;padding:10px 18px;border-top:1px solid #eef0ef;cursor:pointer}
+.wkRow:hover{background:#f8faf9}
+.wkText{flex:1;min-width:0;display:flex;flex-direction:column}
+.wkText b{font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.wkText small{font-size:12px;color:var(--mute);margin-top:2px}
+.wkRow.done .wkText b{color:#8a938e;text-decoration:line-through;font-weight:500}
+.wkCheck{flex:0 0 18px;width:18px;height:18px;border:1.5px solid #a7afab;border-radius:50%;background:#fff;padding:0;display:grid;place-items:center;font-size:10px}
+.wkCheck.on{background:var(--green);border-color:var(--green);color:#fff}
+.wkDue{font-size:12.5px;font-weight:600;white-space:nowrap;color:#3d4642}
+.wkDue.late{color:#b02a32}.wkDue.soon{color:#8f5600}
+.wkWho{font-size:13px;color:#3d4642;white-space:nowrap}
+.wkUnpin{border:0;background:none;color:var(--mute);font-size:12px;padding:2px}
+.wkFoot{padding:10px 18px;border-top:1px solid #eef0ef}
+.wkEmpty{padding:14px 18px;border-top:1px solid #eef0ef;color:var(--mute);font-size:13px}
+.wkGroup{padding:10px 18px;border-top:1px solid #eef0ef}
+.wkGroupHead{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.wkGroupHead span{color:var(--mute)}
+.wkGroupHead .linkBtn{font-size:13px;color:var(--ink);font-weight:700;text-align:left}
+.wkTopic{font-size:13.5px;color:#3d4642;margin-top:5px;cursor:pointer}
+.wkTopic:hover{color:var(--green-deep)}
+.wkInboxAct{display:flex;gap:10px;white-space:nowrap}
+.wkInboxAct .linkBtn{font-size:12.5px}
+.wkSummary{display:flex;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;margin:14px 0 6px}
+.wkSummary>div{flex:1 1 140px;padding:12px 16px;border-right:1px solid #eef0ef;display:flex;flex-direction:column}
+.wkSummary>div:last-child{border-right:0}
+.wkSummary b{font-size:22px}.wkSummary b.g{color:var(--green-deep)}.wkSummary b.r{color:#b02a32}
+.wkSummary span{font-size:12.5px;color:var(--mute)}
+.wkHead2{margin:16px 2px 8px;font-size:13px;font-weight:700}
+.wkHead2 span{font-weight:500;color:var(--mute);margin-left:6px}
+.wcRow{display:flex;align-items:center;gap:12px}
+.wcBtns{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.wcBtns button{border:1px solid #dfe3e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12.5px;white-space:nowrap}
+.wcBtns button.on.g{background:var(--green);border-color:var(--green);color:#fff}
+.wcBtns button.on.b{background:#3d4a6b;border-color:#3d4a6b;color:#fff}
+.wcBtns button.on.m{background:#8a938e;border-color:#8a938e;color:#fff}
+@media(max-width:1100px){.wkGrid{grid-template-columns:1fr}}
 </style></head><body><main class="app"><div id="view"></div></main>
 <button class="fab" id="fab">+</button>
 <nav><div class="inner coreNav">
 <button data-nav="pregled"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span>Pregled</span></button>
+<button data-nav="nedjelja"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3v5M16.5 3v5M3.5 10h17"/><path d="m8.5 15 2.2 2.2 4.8-4.7"/></svg></span><span>Moja nedjelja</span></button>
 <button data-nav="akcije"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span><span>Akcije</span></button>
 <button data-nav="projekti"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l1.8 2h9.2v9.5a2 2 0 0 1-2 2h-15z"/><path d="M3.5 7.5V5a2 2 0 0 1 2-2h4l1.8 2h7.2a2 2 0 0 1 2 2v2.5"/></svg></span><span>Projekti</span></button>
 <button data-nav="sastanci"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3v5M16.5 3v5M3.5 10h17M7 14h3M14 14h3M7 17h3"/></svg></span><span>Sastanci</span></button>
 <button data-nav="beleske"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5z"/><path d="M14.5 3.5V7h3.5M8 11h7M8 15h7"/></svg></span><span>Beleške</span></button>
 </div></nav><dialog id="dlg"><div class="sheet" id="dlgBody"></div></dialog>
 <script>
-const APP_VERSION="v81 · 27.11.2026.";
+const APP_VERSION="v82 · 27.11.2026.";
 const KEY="obaveze_laptop_v1";
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem("obaveze_app_v1"))localStorage.setItem(KEY,localStorage.getItem("obaveze_app_v1"))}catch(e){}
 const IMPORTED=[];
@@ -1160,7 +1218,7 @@ const meetingsView={tab:"upcoming",search:"",series:"all"};
 function render(){
  document.body.classList.toggle("liveMode",route==="uzivo");
  document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("on",b.dataset.nav===route));
- ({pregled:vPregled,akcije:vAkcije,projekti:vProjekti,sastanci:vSastanci,beleske:vBeleske,uzivo:vUzivo}[route]||vPregled)();
+ ({pregled:vPregled,nedjelja:vNedjelja,akcije:vAkcije,projekti:vProjekti,sastanci:vSastanci,beleske:vBeleske,uzivo:vUzivo}[route]||vPregled)();
  bindCards(); bindMenu();
 }
 function head(title,sub=""){
@@ -3697,12 +3755,152 @@ document.addEventListener("keydown",e=>{
  if(j>=0&&j<topics.length){e.preventDefault();liveSelectTopic(topics[j].ID)}
 });
 
+
+/* ===== v82: Moja nedjelja ===== */
+const weekView={start:null,kind:"mine",series:""};
+function wkMonday(isoDate){const d=new Date((isoDate||today())+"T00:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)}
+function wkAdd(isoDate,k){const d=new Date(isoDate+"T00:00:00");d.setDate(d.getDate()+k);return iso(d)}
+function wkLabel(start){
+ const a=new Date(start+"T00:00:00"),b=new Date(wkAdd(start,6)+"T00:00:00");
+ const dd=x=>String(x.getDate()).padStart(2,"0"),mm=x=>String(x.getMonth()+1).padStart(2,"0");
+ return a.getMonth()===b.getMonth()?`${dd(a)}.–${dd(b)}.${mm(b)}.${b.getFullYear()}.`:`${dd(a)}.${mm(a)}.–${dd(b)}.${mm(b)}.${b.getFullYear()}.`;
+}
+const WK_DAYS=["ned","pon","uto","sri","čet","pet","sub"];
+function wkShort(isoDate){const d=new Date(isoDate+"T00:00:00");return `${WK_DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`}
+function wkDefaultDue(start){const fri=wkAdd(start,4);return fri<today()?today():fri}
+function wkIsMine(x){return (x.Odgovoran||"")==="Ivan"}
+function wkData(start){
+ const end=wkAdd(start,6);
+ const open=activeActions();
+ const mineOpen=open.filter(x=>wkIsMine(x)&&((x.Rok&&x.Rok<=end)||x.UNedjelji===start)).sort(attentionSort);
+ const mineDone=S.items.filter(x=>x.Tip==="Akcija"&&wkIsMine(x)&&x.Status==="Završeno"&&x.ZavrsenDatum>=start&&x.ZavrsenDatum<=end);
+ const deleg=open.filter(x=>!wkIsMine(x)&&x.Rok&&x.Rok<=end).sort(attentionSort);
+ const meetings=(S.meetings||[]).filter(m=>m.Status!=="Završen"&&m.Datum>=start&&m.Datum<=end).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""));
+ const meetingGroups=meetings.map(m=>({label:meetingLabel(m),meetingId:m.ID,topics:meetingItems(m.ID).filter(n=>n.Tip==="Beleška"&&n.AgendaStavka&&n.Status!=="Arhivirana"&&!agendaProcessed(n))}));
+ const queued=recurringSeries().filter(s=>s.Status!=="Završen").map(s=>{const t=seriesNextAgenda(s.ID);if(!t.length)return null;const nx=seriesMeetings(s.ID).filter(m=>m.Status!=="Završen"&&m.Datum>=today()).sort((a,b)=>(a.Datum||"").localeCompare(b.Datum||""))[0];return {label:seriesFullName(s),next:nx?wkShort(nx.Datum):"nije zakazan",topics:t,seriesId:s.ID}}).filter(Boolean);
+ const inbox=realNotes().filter(n=>n.Status!=="Arhivirana"&&n.Status!=="Završeno").sort((a,b)=>(b.ID||0)-(a.ID||0));
+ return {end,mineOpen,mineDone,deleg,meetingGroups,queued,inbox};
+}
+function vNedjelja(){
+ if(!weekView.start)weekView.start=wkMonday(today());
+ const st=weekView.start,d=wkData(st),cur=st===wkMonday(today());
+ const closed=(S.weekLog||{})[st];
+ const due=x=>{if(!x.Rok)return "";const k=daysTo(x.Rok);return k<0?`<span class="wkDue late">Kasni ${Math.abs(k)} d</span>`:k===0?`<span class="wkDue soon">Danas</span>`:`<span class="wkDue">${esc(wkShort(x.Rok))}</span>`};
+ const meta=x=>{const m=x.KolegijumID?meetingById(x.KolegijumID):null,p=x.ProjekatID?projectById(x.ProjekatID):null;return [x.Znacaj==="Strateško"?"Strateško":"",m?meetingLabel(m):"",p?projectLabel(p):"",x.UNedjelji===st&&x.Rok>d.end?`uzeto u ovu nedjelju · rok ${fmtDate(x.Rok)}`:"",x.PrenosBroj?`preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · ")};
+ const mineRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><button class="wkCheck" data-wk-done="${x.ID}" aria-label="Označi kao završeno"></button><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span>${x.UNedjelji===st&&x.Rok>d.end?`<button class="wkUnpin" data-wk-unpin="${x.ID}" title="Vrati iz ove nedjelje">Ukloni iz nedjelje</button>`:due(x)}</div>`;
+ const doneRow=x=>`<div class="wkRow done" data-wk-item="${x.ID}"><span class="wkCheck on" aria-hidden="true">✓</span><span class="wkText"><b>${esc(x.Zadatak)}</b><small>${x.Otkazano?"otkazano":"završeno"} ${esc(wkShort(x.ZavrsenDatum))}</small></span></div>`;
+ const delegRow=x=>`<div class="wkRow" data-wk-item="${x.ID}"><span class="wkText"><b>${esc(x.Zadatak)}</b>${meta(x)?`<small>${esc(meta(x))}</small>`:""}</span><span class="wkWho">${esc(x.Odgovoran||"")}</span>${due(x)}</div>`;
+ const people=[...new Set(S.people||[])].filter(p=>p!=="Ivan");
+ const ser=recurringSeries().filter(s=>s.Status!=="Završen");
+ const kinds=[["mine","Moje"],["deleg","Delegiraj"],["meet","Na sastanak"],["note","Beleška"]];
+ $("#view").innerHTML=`<div class="top"><div><div class="sm mute" style="margin:0 0 4px">${esc(wkLabel(st))}${closed?` · nedjelja zatvorena ${esc(fmtDate(closed.closedAt||""))}`:""}</div><h1>Moja nedjelja</h1></div>
+   <div class="wkNav"><button class="btn" id="wkPrev" aria-label="Prethodna nedjelja">‹</button><button class="btn" id="wkNow" ${cur?"disabled":""}>Ova nedjelja</button><button class="btn" id="wkNext" aria-label="Sljedeća nedjelja">›</button></div>
+   <button class="btn wkCloseBtn" id="wkClose">Zatvori nedjelju</button></div>
+  <section class="wkQuick">
+   <div class="wkQuickRow"><input id="wkInput" placeholder="Nova obaveza… (Enter)"><div class="wkSeg" role="group" aria-label="Kuda ide">${kinds.map(([k,l])=>`<button class="${weekView.kind===k?"on":""}" data-wk-kind="${k}">${l}</button>`).join("")}</div></div>
+   <div class="wkQuickRow wkQuickExtra">
+    ${weekView.kind==="deleg"?`<label>Ko <input id="wkWho" list="wkPeople" placeholder="ime"></label><datalist id="wkPeople">${people.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist>`:""}
+    ${weekView.kind==="mine"||weekView.kind==="deleg"?`<label>Rok <input type="date" id="wkDue" value="${esc(wkDefaultDue(st))}"></label>`:""}
+    ${weekView.kind==="meet"?`<label>Serija <select id="wkSeries">${seriesOptionsHTML(ser,weekView.series)}</select></label><span class="sm mute">tema ide u agendu sljedećeg termina serije</span>`:""}
+    ${weekView.kind==="note"?`<span class="sm mute">ide u Neobrađeno — razradiš kasnije</span>`:""}
+    <span class="sm mute" style="margin-left:auto">Enter dodaje</span>
+   </div>
+  </section>
+  <div class="wkGrid">
+   <section class="wkPanel"><div class="wkHead"><h2>Moje ove nedjelje</h2><span>${d.mineDone.length} završeno · ${d.mineOpen.length} otvoreno</span></div>
+    ${d.mineOpen.map(mineRow).join("")}${d.mineDone.map(doneRow).join("")}${!d.mineOpen.length&&!d.mineDone.length?`<div class="wkEmpty">Nema obaveza za ovu nedjelju.</div>`:""}
+    <div class="wkFoot"><button class="linkBtn" id="wkPick">+ Uzmi u ovu nedjelju iz kasnijih</button></div></section>
+   <section class="wkPanel"><div class="wkHead"><h2>Delegirano — follow-up</h2><span>${d.deleg.length}</span></div>
+    ${d.deleg.map(delegRow).join("")||`<div class="wkEmpty">Nema delegiranih obaveza sa rokom ove nedjelje.</div>`}</section>
+   <section class="wkPanel"><div class="wkHead"><h2>Za sastanke</h2><span>teme koje čekaju</span></div>
+    ${d.meetingGroups.filter(g=>g.topics.length).map(g=>`<div class="wkGroup"><div class="wkGroupHead"><button class="linkBtn" data-wk-meeting="${g.meetingId}">${g.label}</button><span>zakazano</span></div>${g.topics.map(t=>`<div class="wkTopic" data-wk-note="${t.ID}">• ${esc(t.Zadatak)}</div>`).join("")}</div>`).join("")}
+    ${d.queued.map(g=>`<div class="wkGroup"><div class="wkGroupHead"><button class="linkBtn" data-wk-series="${g.seriesId}">${esc(g.label)}</button><span>sljedeći: ${esc(g.next)}</span></div>${g.topics.map(t=>`<div class="wkTopic" data-wk-note="${t.ID}">• ${esc(t.Zadatak)}</div>`).join("")}</div>`).join("")}
+    ${!d.meetingGroups.some(g=>g.topics.length)&&!d.queued.length?`<div class="wkEmpty">Nema tema koje čekaju sastanak.</div>`:""}</section>
+   <section class="wkPanel"><div class="wkHead"><h2>Neobrađeno</h2><span>beleške koje čekaju odluku</span></div>
+    ${d.inbox.map(n=>`<div class="wkRow" data-wk-note="${n.ID}"><span class="wkText"><b style="font-weight:500">${esc(n.Zadatak)}</b></span><span class="wkInboxAct"><button class="linkBtn" data-wk-toact="${n.ID}">→ Akcija</button><button class="linkBtn" data-wk-tomeet="${n.ID}">→ Sastanak</button></span></div>`).join("")||`<div class="wkEmpty">Nema neobrađenih beleški.</div>`}</section>
+  </div>`;
+ $("#wkPrev").onclick=()=>{weekView.start=wkAdd(st,-7);vNedjelja()};
+ $("#wkNext").onclick=()=>{weekView.start=wkAdd(st,7);vNedjelja()};
+ $("#wkNow").onclick=()=>{weekView.start=wkMonday(today());vNedjelja()};
+ $("#wkClose").onclick=()=>weekCloseDialog(st);
+ $("#view").querySelectorAll("[data-wk-kind]").forEach(b=>b.onclick=()=>{const v=$("#wkInput").value;weekView.kind=b.dataset.wkKind;vNedjelja();$("#wkInput").value=v;$("#wkInput").focus()});
+ if($("#wkSeries"))$("#wkSeries").onchange=e=>{weekView.series=e.target.value};
+ const add=()=>{
+  const t=$("#wkInput").value.trim();if(!t){$("#wkInput").focus();return}
+  const base={Status:"Otvoreno",Znacaj:"Operativno",Prioritet:"Normalan",Oblast:"Poslovno",Sistem:"Osiguranje",Izvor:"Ad hoc","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Projekat:"",ProjectID:null,RokIstorija:[],OdgovorniIstorija:[]};
+  if(weekView.kind==="mine"||weekView.kind==="deleg"){
+   const who=weekView.kind==="mine"?"Ivan":($("#wkWho")?.value||"").trim(),dueV=$("#wkDue")?.value||"";
+   if(!who){alert("Unesi ko je odgovoran.");$("#wkWho")?.focus();return}
+   if(!dueV){alert("Akcija mora imati rok.");$("#wkDue")?.focus();return}
+   S.items.push({ID:++S.lastId,Tip:"Akcija",Zadatak:t,Odgovoran:who,Rok:dueV,...base});
+  }else if(weekView.kind==="meet"){
+   const sid=Number($("#wkSeries")?.value)||null;if(!sid){alert("Izaberi seriju sastanka.");return}
+   weekView.series=String(sid);
+   S.items.push({ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:t,Oblast:"Poslovno",KolegijumID:null,SerijaID:sid,Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",AgendaStavka:true,ZaSledeciSastanak:true,Zakljucak:"",Zakljucci:[],IzDiskusije:"",Obradjeno:false,PrenesiDalje:false});
+  }else{
+   S.items.push({ID:++S.lastId,Tip:"Beleška",Status:"Aktivna",Zadatak:t,Oblast:"Poslovno",Odgovoran:"",Rok:"",Projekat:"",ProjectID:null,Znacaj:"Operativno",Prioritet:"Normalan",Sistem:"",Izvor:"","Detalj izvora":"","Detalji dogovora":"",Napomena:"",Tekst:"",ZaSledeciSastanak:false,AgendaStavka:false});
+  }
+  save();norm();vNedjelja();setTimeout(()=>$("#wkInput")?.focus(),0);
+ };
+ $("#wkInput").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
+ ["#wkWho","#wkDue"].forEach(sel=>{const el=$(sel);if(el)el.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}}});
+ $("#view").querySelectorAll("[data-wk-item]").forEach(el=>el.onclick=()=>itemDialog(Number(el.dataset.wkItem)));
+ $("#view").querySelectorAll("[data-wk-done]").forEach(b=>b.onclick=e=>{e.stopPropagation();completeActionDialog(Number(b.dataset.wkDone))});
+ $("#view").querySelectorAll("[data-wk-unpin]").forEach(b=>b.onclick=e=>{e.stopPropagation();const x=S.items.find(z=>z.ID===Number(b.dataset.wkUnpin));if(x){delete x.UNedjelji;save();vNedjelja()}});
+ $("#view").querySelectorAll("[data-wk-note]").forEach(el=>el.onclick=e=>{if(e.target.closest("[data-wk-toact],[data-wk-tomeet]"))return;noteDialog(Number(el.dataset.wkNote))});
+ $("#view").querySelectorAll("[data-wk-meeting]").forEach(b=>b.onclick=()=>meetingDialog(Number(b.dataset.wkMeeting)));
+ $("#view").querySelectorAll("[data-wk-series]").forEach(b=>b.onclick=()=>seriesDialog(Number(b.dataset.wkSeries)));
+ $("#view").querySelectorAll("[data-wk-toact]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=S.items.find(z=>z.ID===Number(b.dataset.wkToact));if(n)editItem(null,"Akcija",{Zadatak:n.Zadatak,Oblast:n.Oblast||"Poslovno",_fromNoteId:n.ID})});
+ $("#view").querySelectorAll("[data-wk-tomeet]").forEach(b=>b.onclick=e=>{e.stopPropagation();noteToAgendaDialog(Number(b.dataset.wkTomeet))});
+ $("#wkPick").onclick=()=>weekPickDialog(st);
+}
+function weekPickDialog(st){
+ const end=wkAdd(st,6);
+ const later=activeActions().filter(x=>wkIsMine(x)&&x.Rok&&x.Rok>end&&x.UNedjelji!==st).sort((a,b)=>(a.Rok||"").localeCompare(b.Rok||""));
+ navOpen(`<div class="row between"><div><h2>Uzmi u ovu nedjelju</h2><div class="sm mute">${esc(wkLabel(st))} · rok obaveze se ne mijenja</div></div><button class="btn" id="wpClose">×</button></div>
+  <div class="list" style="margin-top:12px">${later.map(x=>`<div class="card tight"><div class="row between"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">rok ${esc(fmtDate(x.Rok))}</div></div><button class="btn" data-wp-pin="${x.ID}">Uzmi</button></div></div>`).join("")||`<div class="empty">Nema tvojih obaveza sa kasnijim rokom.</div>`}</div>`,`weekPick:${st}`,{dedupe:false});
+ $("#wpClose").onclick=navBack;
+ $("#dlgBody").querySelectorAll("[data-wp-pin]").forEach(b=>b.onclick=()=>{const x=S.items.find(z=>z.ID===Number(b.dataset.wpPin));if(!x)return;x.UNedjelji=st;save();b.textContent="Uzeto ✓";b.disabled=true;if(route==="nedjelja")vNedjelja()});
+}
+function weekCloseDialog(st){
+ const d=wkData(st),nextSt=wkAdd(st,7),nextFri=wkAdd(nextSt,4);
+ const dec={};
+ const draw=()=>{
+  const n=k=>Object.values(dec).filter(v=>v===k).length;
+  navOpen(`<div class="row between"><div><h2>Zatvori nedjelju ${esc(wkLabel(st))}</h2><div class="sm mute">Za svaku otvorenu obavezu odluči: završeno, prenesi ili otkaži. Stavke bez odluke ostaju kako jesu.</div></div><button class="btn" id="wcClose">×</button></div>
+   <div class="wkSummary"><div><b class="g">${d.mineDone.length+n("done")}</b><span>završeno</span></div><div><b>${n("carry")}</b><span>prenosi se (${esc(wkLabel(nextSt))})</span></div><div><b>${d.mineOpen.length-Object.values(dec).filter(Boolean).length}</b><span>bez odluke</span></div><div><b class="r">${d.deleg.filter(x=>daysTo(x.Rok)<0).length}</b><span>delegirano kasni</span></div></div>
+   <div class="wkHead2">Moje otvorene obaveze</div>
+   <div class="list">${d.mineOpen.map(x=>{const pinned=x.UNedjelji===st&&x.Rok>d.end;const target=pinned?"sljedeću nedjelju":wkShort(nextFri);return `<div class="card tight wcRow"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">${esc([x.Rok?(daysTo(x.Rok)<0?`kasni ${Math.abs(daysTo(x.Rok))} d`:`rok ${fmtDate(x.Rok)}`):"",pinned?"ručno uzeto · rok ostaje":"",x.PrenosBroj?`već preneseno ${x.PrenosBroj}×`:""].filter(Boolean).join(" · "))}</div></div><div class="wcBtns"><button class="${dec[x.ID]==="done"?"on g":""}" data-wc="${x.ID}:done">Završeno</button><button class="${dec[x.ID]==="carry"?"on b":""}" data-wc="${x.ID}:carry">Prenesi → ${esc(target)}</button><button class="${dec[x.ID]==="cancel"?"on m":""}" data-wc="${x.ID}:cancel">Otkaži</button></div></div>`}).join("")||`<div class="empty">Nema otvorenih obaveza u ovoj nedjelji.</div>`}</div>
+   ${d.deleg.length?`<div class="wkHead2">Delegirano <span>rok je dogovoren — ostaje za follow-up, ne pomjera se</span></div><div class="list">${d.deleg.map(x=>`<div class="card tight"><div class="row between"><div class="grow"><b>${esc(x.Zadatak)}</b><div class="sm mute">${esc(x.Odgovoran||"")}</div></div><span class="${daysTo(x.Rok)<0?"wkDue late":"wkDue"}">${daysTo(x.Rok)<0?`Kasni ${Math.abs(daysTo(x.Rok))} d`:esc(wkShort(x.Rok))}</span></div></div>`).join("")}</div>`:""}
+   <div class="btnrow" style="margin-top:16px;justify-content:flex-end"><button class="btn" id="wcReport">Izvještaj nedjelje (PDF)</button><button class="btn pri" id="wcApply">Zatvori nedjelju</button></div>`,`weekClose:${st}`,{dedupe:true});
+  $("#wcClose").onclick=navBack;
+  $("#dlgBody").querySelectorAll("[data-wc]").forEach(b=>b.onclick=()=>{const [id,v]=b.dataset.wc.split(":");dec[id]=dec[id]===v?null:v;draw()});
+  $("#wcReport").onclick=()=>{archiveMeetingView.from=st;archiveMeetingView.to=d.end;Object.assign(closedReportView,{period:"custom",type:"all",person:"",series:"",area:"",importance:"",priority:""});closedReportDialog()};
+  $("#wcApply").onclick=()=>{
+   const log={closedAt:today(),done:[],carried:[],cancelled:[]};
+   d.mineOpen.forEach(x=>{const v=dec[x.ID];if(!v)return;
+    if(v==="done"){x.Status="Završeno";x.ZavrsenDatum=today();log.done.push(x.ID)}
+    else if(v==="cancel"){x.Status="Završeno";x.ZavrsenDatum=today();x.Otkazano=true;x.ZavrsniKomentar=x.ZavrsniKomentar||"Otkazano pri zatvaranju nedjelje";log.cancelled.push(x.ID)}
+    else if(v==="carry"){
+     const pinned=x.UNedjelji===st&&x.Rok>d.end;
+     if(pinned){x.UNedjelji=nextSt}
+     else{if(!Array.isArray(x.RokIstorija))x.RokIstorija=[];x.RokIstorija.push({Od:x.Rok||"",Do:nextFri,Datum:today(),Razlog:`Preneseno pri zatvaranju nedjelje ${wkLabel(st)}`});x.Rok=nextFri;if(x.UNedjelji)delete x.UNedjelji}
+     x.PrenosBroj=(Number(x.PrenosBroj)||0)+1;log.carried.push(x.ID);
+    }
+   });
+   if(!S.weekLog||typeof S.weekLog!=="object")S.weekLog={};
+   S.weekLog[st]=log;save();norm();closeDlg();route="nedjelja";render();
+  };
+ };
+ draw();
+}
+
 function bindCards(root=document){
  root.querySelectorAll("[data-item]").forEach(c=>c.onclick=()=>itemDialog(Number(c.dataset.item)));
 }
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js?v=20261127-81").then(reg=>{
+  navigator.serviceWorker.register("sw.js?v=20261127-82").then(reg=>{
    reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener("controllerchange",()=>{
